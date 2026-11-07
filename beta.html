@@ -19,7 +19,7 @@
 :root {
   --bg: #F2F4F3; --surface: #FFFFFF; --ink: #1A2127; --muted: #5A6670; --rule: #D3D9DC;
   --dem: #2A5DAC; --rep: #BF3A30; --zero: #E4E8E9; --amber: #D58A12; --teal: #11807A;
-  --chip: #E9EDEE; --me: #6D3FD8; --me-ring: #FFFFFF; --fill-op: .5;
+  --chip: #E9EDEE; --me: #6D3FD8; --me-ring: #FFFFFF; --fill-op: .5; --water: #A8CCE0; --water-line: #5E93AE; --stop: #1A2127; --stop-ink: #FFFFFF;
   --shadow: 0 8px 24px -10px rgba(0,0,0,.4);
   --font-display: "Barlow Condensed", "Arial Narrow", "Roboto Condensed", sans-serif;
   --font-body: "Public Sans", "Segoe UI", system-ui, -apple-system, sans-serif;
@@ -29,13 +29,13 @@
   :root:not([data-theme="light"]) {
     --bg: #11161A; --surface: #182026; --ink: #E5EAED; --muted: #98A5AE; --rule: #2B353C;
     --dem: #6E9BE3; --rep: #E46A5F; --zero: #3A454C; --amber: #E8A83A; --teal: #2FB2A7;
-    --chip: #222B31; --me: #B596FF; --me-ring: #11161A; --fill-op: .55; color-scheme: dark;
+    --chip: #222B31; --me: #B596FF; --me-ring: #11161A; --fill-op: .55; --water: #1F4152; --water-line: #4F8AA3; --stop: #F2F4F3; --stop-ink: #11161A; color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
   --bg: #11161A; --surface: #182026; --ink: #E5EAED; --muted: #98A5AE; --rule: #2B353C;
   --dem: #6E9BE3; --rep: #E46A5F; --zero: #3A454C; --amber: #E8A83A; --teal: #2FB2A7;
-  --chip: #222B31; --me: #B596FF; --me-ring: #11161A; --fill-op: .55; color-scheme: dark;
+  --chip: #222B31; --me: #B596FF; --me-ring: #11161A; --fill-op: .55; --water: #1F4152; --water-line: #4F8AA3; --stop: #F2F4F3; --stop-ink: #11161A; color-scheme: dark;
 }
 * { box-sizing: border-box; }
 html, body { margin: 0; height: 100%; overflow: hidden; background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 15px; line-height: 1.45; }
@@ -92,7 +92,7 @@ select, input[type="search"] { font: 500 16px var(--font-body); color: var(--ink
 .locmsg { font-size: 14px; color: var(--muted); min-width: 0; }
 .locmsg.err { color: var(--rep); }
 .locmsg b { color: var(--me); }
-.locbtn { flex: none; font: 600 15px var(--font-body); color: #fff; background: var(--me); border: 0; border-radius: 10px; padding: 0 16px; min-height: 44px; cursor: pointer; display: inline-flex; gap: 8px; align-items: center; }
+.locbtn { flex: none; font: 600 15px var(--font-body); color: var(--me-ring); background: var(--me); border: 0; border-radius: 10px; padding: 0 16px; min-height: 44px; cursor: pointer; display: inline-flex; gap: 8px; align-items: center; }
 .locbtn.on { background: var(--chip); color: var(--ink); }
 .locbtn.recenter { background: var(--surface); color: var(--me); box-shadow: inset 0 0 0 2px var(--me); }
 .locbtn .dot { width: 10px; height: 10px; border-radius: 50%; background: currentColor; }
@@ -116,9 +116,35 @@ select, input[type="search"] { font: 500 16px var(--font-body); color: var(--ink
 .mute { color: var(--muted); }
 .linkbtn { font: 600 14px var(--font-body); color: var(--muted); background: none; border: 0; padding: 8px 0 0; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
 
+/* ---------- water, stops, trip ---------- */
+.lklab { font: italic 600 13px/1.1 var(--font-body); color: var(--water-line); text-align: center; text-shadow: 0 0 3px var(--surface), 0 0 3px var(--surface); pointer-events: none; }
+.stopmk { width: 28px; height: 28px; border-radius: 50%; background: var(--stop); color: var(--stop-ink); border: 2px solid var(--stop-ink); font: 700 15px/24px var(--font-display); text-align: center; box-shadow: 0 2px 6px rgba(0,0,0,.4); }
+.actions { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+.act { flex: 1; font: 600 15px var(--font-body); min-height: 44px; border-radius: 10px; border: 1px solid var(--rule); background: var(--chip); color: var(--ink); cursor: pointer; padding: 0 12px; white-space: nowrap; }
+.act.primary { background: var(--ink); color: var(--surface); border-color: var(--ink); }
+.act:disabled { opacity: .45; cursor: default; }
+.stops { list-style: none; padding: 0; margin: 8px 0 0; display: grid; gap: 8px; max-width: 640px; }
+.stops li { display: flex; gap: 10px; align-items: center; background: var(--surface); border: 1px solid var(--rule); border-radius: 10px; padding: 8px 10px; }
+.stops .n { flex: none; width: 28px; height: 28px; border-radius: 50%; background: var(--stop); color: var(--stop-ink); font: 700 15px/28px var(--font-display); text-align: center; }
+.stops .t { flex: 1; min-width: 0; cursor: pointer; }
+.stops .t b { display: block; font-weight: 600; }
+.stops .t span { color: var(--muted); font-size: 13px; }
+.iconbtn { flex: none; width: 40px; height: 40px; border-radius: 8px; border: 1px solid var(--rule); background: var(--chip); color: var(--ink); font-size: 18px; cursor: pointer; }
+.sugg { display: grid; gap: 6px; max-width: 640px; }
+.sugg .row { display: flex; gap: 10px; align-items: center; background: var(--surface); border: 1px solid var(--rule); border-radius: 10px; padding: 8px 10px; }
+.sugg .row .t { flex: 1; min-width: 0; font-size: 14px; }
+.sugg .row .t b { font-weight: 600; }
+.sugg .row .t span { color: var(--muted); }
+.sugg .row .pill { font-size: 12.5px; padding: 3px 9px; }
+.grouphead { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; max-width: 640px; margin: 18px 0 6px; }
+.grouphead p { margin: 0; font-weight: 600; }
+.tripbar { position: sticky; bottom: 0; background: var(--bg); border-top: 1px solid var(--rule); padding: 10px max(16px, env(safe-area-inset-right, 0px)) calc(10px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); }
+.tripbar .actions { max-width: 640px; margin: 0 auto; }
+.fine { color: var(--muted); font-size: 13px; max-width: 640px; }
+
 /* ---------- details panel ---------- */
-#details { position: fixed; inset: 0; z-index: 1000; background: var(--bg); overflow-y: auto; overscroll-behavior: contain; }
-#details[hidden] { display: none; }
+#details, #trip { position: fixed; inset: 0; z-index: 1000; background: var(--bg); overflow-y: auto; overscroll-behavior: contain; }
+#details[hidden], #trip[hidden] { display: none; }
 .dhead { position: sticky; top: 0; z-index: 2; background: var(--bg); border-bottom: 1px solid var(--rule); display: flex; justify-content: space-between; align-items: center; gap: 12px;
   padding: calc(env(safe-area-inset-top, 0px) + 8px) max(16px, env(safe-area-inset-right, 0px)) 8px max(16px, env(safe-area-inset-left, 0px)); }
 .dhead h1 { font: 700 26px/1 var(--font-display); margin: 0; }
@@ -170,6 +196,7 @@ td .pill { font-size: 12.5px; padding: 3px 9px; }
 
 <div class="fab tl">
   <button type="button" class="btn" id="layersbtn" aria-expanded="false" aria-controls="layers"></button>
+  <button type="button" class="btn" id="tripbtn">Trip</button>
   <button type="button" class="btn" id="detailsbtn">Details</button>
   <div class="layers" id="layers" hidden>
     <div>
@@ -202,6 +229,20 @@ td .pill { font-size: 12.5px; padding: 3px 9px; }
   </div>
   <div id="readout" aria-live="polite"></div>
 </section>
+
+<div id="trip" hidden role="dialog" aria-modal="true" aria-labelledby="ttitle">
+  <div class="dhead"><h1 id="ttitle">Trip</h1><button type="button" class="btn" id="closetrip">Back to map</button></div>
+  <div class="wrap" style="padding-bottom:16px">
+    <p class="label-sm">Your stops</p>
+    <ol class="stops" id="stops"></ol>
+    <p class="fine" id="tripnote"></p>
+    <div id="suggest"></div>
+  </div>
+  <div class="tripbar"><div class="actions">
+    <button type="button" class="act" id="orderbtn">Order for driving</button>
+    <button type="button" class="act primary" id="gmapsbtn">Open in Google Maps</button>
+  </div></div>
+</div>
 
 <div id="details" hidden role="dialog" aria-modal="true" aria-labelledby="dtitle">
   <div class="dhead"><h1 id="dtitle">Yorktown Split Tickets</h1><button type="button" class="btn" id="closedetails">Back to map</button></div>
@@ -236,6 +277,7 @@ td .pill { font-size: 12.5px; padding: 3px 9px; }
         <li><b>Net crossover voters</b> is the gap in Republican share times the district's two-party vote. It is a floor, not a count: voters who split in opposite directions cancel out, and some people skip the supervisor race or the other one.</li>
         <li><b>Taconic</b> distances are measured from the middle of each district to the nearest point on the parkway.</li>
         <li>Landmarks and restaurants come from OpenStreetMap, which covers schools and parks well but lists only some of the town's restaurants.</li>
+        <li><b>Trip stops</b> go to a landmark inside each district (a park, shop, school or town building), or the district's middle where it has none. Your stops are kept in this browser only.</li>
         <li><b>Your location</b> is read by your own browser only after you tap “Start driving”. The page never sends or saves it. While it's on, the page keeps your screen awake.</li>
         <li>Results are unofficial. They include early, Election Day and absentee ballots; affidavit ballots had not been added yet, so totals can still move a little.</li>
       </ul>
@@ -243,7 +285,7 @@ td .pill { font-size: 12.5px; padding: 3px 9px; }
       <ul>
         <li>Votes: <a href="https://app.enhancedvoting.com/results/public/westchester-county-ny/elections/2026GeneralElection" target="_blank" rel="noopener">Westchester County Board of Elections results</a>, election-district breakdowns, published Nov 7, 2026 at 10:01 AM ET (42 of 42 districts reporting).</li>
         <li>District boundaries: <a href="https://giswww.westchestergov.com/arcgis/rest/services/Datahub_Boundaries/MapServer/0" target="_blank" rel="noopener">Westchester County GIS</a> (election district linework current as of April 2023), simplified for display.</li>
-        <li>Street map: © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap contributors</a>, © <a href="https://carto.com/attributions" target="_blank" rel="noopener">CARTO</a>. Landmarks and restaurants: © OpenStreetMap contributors.</li>
+        <li>Street map: tiles © Esri, HERE, Garmin, © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap contributors</a>. Reservoirs and lakes: Westchester County GIS. Landmarks and restaurants: © OpenStreetMap contributors.</li>
       </ul>
     </section>
   </div>
@@ -303,7 +345,7 @@ function matches(id) {
 let C = {};
 function readColors() {
   const cs = getComputedStyle(document.documentElement);
-  ["dem","rep","zero","amber","teal","ink","muted","surface","me","fill-op"].forEach(k => C[k] = cs.getPropertyValue("--" + k).trim());
+  ["dem","rep","zero","amber","teal","ink","muted","surface","me","fill-op","water","water-line"].forEach(k => C[k] = cs.getPropertyValue("--" + k).trim());
 }
 function isDark() { return getComputedStyle(document.documentElement).colorScheme.includes("dark"); }
 function hex(c) { c = c.replace("#", ""); return [0, 2, 4].map(i => parseInt(c.slice(i, i + 2), 16)); }
@@ -335,13 +377,13 @@ L.control.zoom({ position: "topright" }).addTo(map);
 map.attributionControl.setPrefix(false);
 map.createPane("labels"); map.getPane("labels").style.zIndex = 450; map.getPane("labels").style.pointerEvents = "none";
 map.createPane("me"); map.getPane("me").style.zIndex = 640;
-const ATTR = '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> © <a href="https://carto.com/attributions">CARTO</a>';
+const ATTR = 'Tiles © <a href="https://www.esri.com">Esri</a>, HERE, Garmin, © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
 let base = null, labels = null;
 function setTiles() {
-  const dark = isDark(), b = dark ? "dark_nolabels" : "voyager_nolabels", l = dark ? "dark_only_labels" : "voyager_only_labels";
+  const s = isDark() ? "Dark" : "Light", u = n => `https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_${s}_Gray_${n}/MapServer/tile/{z}/{y}/{x}`;
   if (base) { base.remove(); labels.remove(); }
-  base = L.tileLayer(`https://{s}.basemaps.cartocdn.com/rastertiles/${b}/{z}/{x}/{y}{r}.png`, { subdomains: "abcd", maxZoom: 20, attribution: ATTR }).addTo(map);
-  labels = L.tileLayer(`https://{s}.basemaps.cartocdn.com/rastertiles/${l}/{z}/{x}/{y}{r}.png`, { subdomains: "abcd", maxZoom: 20, pane: "labels" }).addTo(map);
+  base = L.tileLayer(u("Base"), { maxZoom: 19, maxNativeZoom: 16, attribution: ATTR }).addTo(map);
+  labels = L.tileLayer(u("Reference"), { maxZoom: 19, maxNativeZoom: 16, pane: "labels" }).addTo(map);
 }
 const polys = {}, labs = {};
 IDS.forEach(id => {
@@ -352,10 +394,21 @@ IDS.forEach(id => {
     icon: L.divIcon({ className: "edlab", html: String(+id.slice(2)), iconSize: [40, 18], iconAnchor: [20, 9] }) }).addTo(map);
 });
 const townBounds = L.featureGroup(Object.values(polys)).getBounds();
+// reservoirs and lakes sit over the district colors, so water reads as water
+map.createPane("water"); map.getPane("water").style.zIndex = 420; map.getPane("water").style.pointerEvents = "none";
+const waters = DATA.lakes.map(l => L.polygon(l.g.split(";").map(r => {
+  const a = r.split(",").map(Number); const pts = [[a[0], a[1]]];
+  for (let i = 2; i < a.length; i += 2) pts.push([pts[pts.length - 1][0] + a[i], pts[pts.length - 1][1] + a[i + 1]]);
+  return pts.map(([x, y]) => toLL(x, y));
+}), { pane: "water", interactive: false, weight: 1, fillOpacity: .92 }).addTo(map));
+DATA.lakes.filter(l => l.n && l.lp).forEach(l => L.marker(toLL(...l.lp), { interactive: false, keyboard: false, pane: "labels",
+  icon: L.divIcon({ className: "lklab", html: esc(l.n).replace(" ", "<br>"), iconSize: [110, 32], iconAnchor: [55, 16] }) }).addTo(map));
+function paintWater() { waters.forEach(w => w.setStyle({ color: C["water-line"], fillColor: C.water })); }
 map.on("click", () => select((me && me.ed) || null));
+map.on("zoomend", () => paint());
 
 function paint() {
-  const searching = !!state.q.trim(), op = parseFloat(C["fill-op"]) || .5;
+  const searching = !!state.q.trim(), op = (parseFloat(C["fill-op"]) || .5) * (map.getZoom() >= 14 ? .7 : 1);
   IDS.forEach(id => {
     const sel = state.sel === id, dim = searching && !matches(id);
     polys[id].setStyle({ fillColor: fillFor(id), fillOpacity: dim ? op * .25 : op, color: sel ? C.ink : C.surface, weight: sel ? 3.5 : 1.2, opacity: sel ? 1 : .9 });
@@ -485,9 +538,15 @@ function renderReadout() {
     ${raceRow(SUP, rec.SUP)}${raceRow(meta, rec[state.race])}
     <div class="gapline">${gapSentence(st)}</div>
     ${state.more ? moreBlock(id) : ""}
+    ${id ? `<div class="actions"><button type="button" class="act" data-act="go">Directions</button><button type="button" class="act${inTrip(id) ? "" : " primary"}" data-act="add">${inTrip(id) ? "✓ In trip" : "+ Add stop"}</button></div>` : ""}
     <button type="button" class="linkbtn" id="morebtn" aria-expanded="${state.more}">${state.more ? "Less" : id ? "What's in this district" : "More"}</button>`;
 }
-document.getElementById("readout").addEventListener("click", e => { if (e.target.id === "morebtn") { state.more = !state.more; renderReadout(); } });
+document.getElementById("readout").addEventListener("click", e => {
+  if (e.target.id === "morebtn") { state.more = !state.more; renderReadout(); return; }
+  const a = e.target.closest("[data-act]"); if (!a || !state.sel) return;
+  if (a.dataset.act === "go") openGmaps([stopFor(state.sel)]);
+  else { if (inTrip(state.sel)) trip = trip.filter(x => x !== state.sel); else trip.push(state.sel); saveTrip(); }
+});
 
 /* ---------- layers + legend ---------- */
 const layersBtn = document.getElementById("layersbtn"), layersBox = document.getElementById("layers");
@@ -520,7 +579,7 @@ function renderLegend() {
 const details = document.getElementById("details");
 document.getElementById("detailsbtn").addEventListener("click", () => { layersBox.hidden = true; layersBtn.setAttribute("aria-expanded", false); renderDetails(); details.hidden = false; details.scrollTop = 0; });
 document.getElementById("closedetails").addEventListener("click", () => { details.hidden = true; });
-document.addEventListener("keydown", e => { if (e.key === "Escape") { details.hidden = true; layersBox.hidden = true; } });
+document.addEventListener("keydown", e => { if (e.key === "Escape") { details.hidden = true; tripBox.hidden = true; layersBox.hidden = true; } });
 function showOnMap(id) {
   details.hidden = true; select(id);
   if (watchId !== null) { follow = false; renderLocBtn(); }
@@ -597,12 +656,89 @@ details.addEventListener("click", e => { const t = e.target.closest("[data-ed]")
 details.addEventListener("keydown", e => { const t = e.target.closest("[data-ed]"); if (t && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); showOnMap(t.dataset.ed); } });
 document.getElementById("find").addEventListener("input", e => { state.q = e.target.value; paint(); renderGuide(); renderTable(); renderHits(); });
 
+/* ---------- trip: stops to drive to, opened in Google Maps ---------- */
+const POI = {}; DATA.pois.forEach(p => { if (!POI[p.n]) POI[p.n] = p; });
+// a district's stop is a landmark inside it (park, shopping, school, town service, food), else its middle
+function stopFor(id) {
+  const g = DATA.guide[id];
+  for (const c of ["P", "R", "S", "C", "F"]) for (const n of g[c]) { const p = POI[n]; if (p && pipXY(p.x, p.y, RINGS[id])) return { id, name: n, ll: toLL(p.x, p.y) }; }
+  return { id, name: null, ll: toLL(...DATA.eds[id].lp) };
+}
+let trip = []; try { trip = JSON.parse(store.get("yt-trip") || "[]").filter(id => DATA.res[id]); } catch (e) { trip = []; }
+const inTrip = id => trip.includes(id);
+const stopLayer = L.layerGroup().addTo(map);
+function saveTrip() { store.set("yt-trip", JSON.stringify(trip)); renderStops(); renderReadout(); renderTripBtn(); if (!tripBox.hidden) renderTrip(); }
+function renderStops() {
+  stopLayer.clearLayers();
+  trip.forEach((id, i) => L.marker(stopFor(id).ll, { pane: "me", keyboard: false, icon: L.divIcon({ className: "", html: `<div class="stopmk">${i + 1}</div>`, iconSize: [28, 28], iconAnchor: [14, 14] }) })
+    .on("click", () => select(id)).addTo(stopLayer));
+}
+function renderTripBtn() { document.getElementById("tripbtn").textContent = trip.length ? `Trip · ${trip.length}` : "Trip"; }
+const MAXSTOPS = 10; // Google Maps takes a destination and up to 9 stops on the way
+function gmapsUrl(stops) {
+  const f = s => s.ll[0].toFixed(5) + "," + s.ll[1].toFixed(5);
+  const last = stops[stops.length - 1], mid = stops.slice(0, -1).slice(0, MAXSTOPS - 1);
+  return "https://www.google.com/maps/dir/?api=1&travelmode=driving&destination=" + encodeURIComponent(f(last)) + (mid.length ? "&waypoints=" + encodeURIComponent(mid.map(f).join("|")) : "");
+}
+function openGmaps(stops) { if (stops.length) window.open(gmapsUrl(stops), "_blank", "noopener"); }
+function dist(a, b) { const dy = a[0] - b[0], dx = (a[1] - b[1]) * Math.cos(a[0] * Math.PI / 180); return dx * dx + dy * dy; }
+function orderTrip() {
+  // nearest stop next, starting from where you are (or the first stop)
+  const left = trip.slice(), out = [];
+  let at = me ? me.ll : stopFor(left[0]).ll;
+  while (left.length) { let bi = 0; left.forEach((id, i) => { if (dist(at, stopFor(id).ll) < dist(at, stopFor(left[bi]).ll)) bi = i; }); const id = left.splice(bi, 1)[0]; out.push(id); at = stopFor(id).ll; }
+  trip = out; saveTrip();
+}
+const tripBox = document.getElementById("trip");
+function stopLine(id) {
+  const s = stopFor(id), st = stats(DATA.res[id]), meta = RACES[state.race];
+  return { title: s.name ? `${esc(s.name)}` : edName(id), sub: `${s.name ? edName(id) + " · " : ""}${esc(catLabel(st.cat, meta.short))} · gap ${Math.abs(st.lean).toFixed(1)}`, st };
+}
+function renderTrip() {
+  const meta = RACES[state.race];
+  document.getElementById("stops").innerHTML = trip.length ? trip.map((id, i) => { const l = stopLine(id); return `<li>
+      <span class="n">${i + 1}</span><span class="t" data-show="${id}"><b>${l.title}</b><span>${l.sub}</span></span>
+      ${i ? `<button type="button" class="iconbtn" data-up="${id}" aria-label="Move up">↑</button>` : ""}
+      <button type="button" class="iconbtn" data-rm="${id}" aria-label="Remove">✕</button></li>`; }).join("")
+    : `<li class="mute" style="justify-content:center">No stops yet. Add suggested ones below, or tap a district on the map and choose Add stop.</li>`;
+  document.getElementById("tripnote").textContent = trip.length > MAXSTOPS ? `Google Maps takes ${MAXSTOPS} stops at a time, so it will open the first ${MAXSTOPS}.` : trip.length ? "Google Maps starts from where you are and drives the stops in this order." : "";
+  document.getElementById("gmapsbtn").disabled = !trip.length; document.getElementById("orderbtn").disabled = trip.length < 2;
+  const all = IDS.map(id => ({ id, ...stats(DATA.res[id]) }));
+  const groups = [
+    [`R for supervisor, D for ${meta.short}`, all.filter(s => s.cat === "RD").sort((a, b) => b.lean - a.lean)],
+    [`D for supervisor, R for ${meta.short}`, all.filter(s => s.cat === "DR").sort((a, b) => a.lean - b.lean)],
+    ["Biggest Lachterman overperformance", all.slice().sort((a, b) => b.lean - a.lean).slice(0, 5)],
+    ["Most Democratic", all.slice().sort((a, b) => b.mc - a.mc).slice(0, 3)],
+    ["Most Republican", all.slice().sort((a, b) => a.mc - b.mc).slice(0, 3)]
+  ];
+  document.getElementById("suggest").innerHTML = `<p class="label-sm" style="margin-top:22px">Suggested stops</p>` + groups.filter(g => g[1].length).map(([name, list], gi) => `
+    <div class="grouphead"><p>${esc(name)}</p><button type="button" class="linkbtn" style="padding:0" data-addall="${gi}">Add all</button></div>
+    <div class="sugg">${list.map(s => { const l = stopLine(s.id); return `<div class="row"><span class="pill"><i style="background:${catColor(s.cat)}"></i>${+s.id.slice(2)}</span>
+      <span class="t" data-show="${s.id}"><b>${l.title}</b><br><span>${fmtM(s.ms)} supervisor · ${fmtM(s.mc)} ${esc(meta.short)}</span></span>
+      <button type="button" class="act${inTrip(s.id) ? "" : " primary"}" style="flex:none" data-toggle="${s.id}">${inTrip(s.id) ? "✓ Added" : "+ Add"}</button></div>`; }).join("")}</div>`).join("");
+  tripBox._groups = groups;
+}
+document.getElementById("tripbtn").addEventListener("click", () => { layersBox.hidden = true; layersBtn.setAttribute("aria-expanded", false); renderTrip(); tripBox.hidden = false; tripBox.scrollTop = 0; });
+document.getElementById("closetrip").addEventListener("click", () => { tripBox.hidden = true; });
+document.getElementById("gmapsbtn").addEventListener("click", () => openGmaps(trip.map(stopFor)));
+document.getElementById("orderbtn").addEventListener("click", orderTrip);
+tripBox.addEventListener("click", e => {
+  const t = e.target.closest("[data-show],[data-up],[data-rm],[data-toggle],[data-addall]"); if (!t) return;
+  const d = t.dataset;
+  if (d.show) { tripBox.hidden = true; showOnMap(d.show); }
+  else if (d.up) { const i = trip.indexOf(d.up); trip.splice(i - 1, 0, trip.splice(i, 1)[0]); saveTrip(); }
+  else if (d.rm) { trip = trip.filter(x => x !== d.rm); saveTrip(); }
+  else if (d.toggle) { if (inTrip(d.toggle)) trip = trip.filter(x => x !== d.toggle); else trip.push(d.toggle); saveTrip(); }
+  else if (d.addall) { tripBox._groups[+d.addall][1].forEach(s => { if (!inTrip(s.id)) trip.push(s.id); }); saveTrip(); }
+});
+
 /* ---------- state ---------- */
 function select(id) { state.sel = id; paint(); renderReadout(); }
 function renderAll() {
   document.getElementById("cmpbtn").textContent = RACES[state.race].short;
   paint(); renderReadout(); renderLegend(); renderLayersBtn();
   if (!details.hidden) renderDetails();
+  if (!tripBox.hidden) renderTrip();
 }
 document.getElementById("views").addEventListener("click", e => {
   const b = e.target.closest("button[data-view]"); if (!b) return;
@@ -617,14 +753,14 @@ const sv = store.get("yt-view"), sr = store.get("yt-race");
 if (sr && RACES[sr]) { state.race = sr; document.getElementById("race").value = sr; }
 if (sv && (VIEWS[sv] || sv === "cmp")) { state.view = sv; document.querySelectorAll("#views button").forEach(x => x.setAttribute("aria-pressed", x.dataset.view === sv ? "true" : "false")); }
 
-readColors(); setTiles(); renderAll(); renderLocBtn();
+readColors(); setTiles(); paintWater(); renderStops(); renderTripBtn(); renderAll(); renderLocBtn();
 requestAnimationFrame(fitTown);
 locMsg("Tap Start driving to follow your location.");
 // pick tracking back up if location was already allowed and on last time
 if (store.get("yt-drive") !== "0" && navigator.permissions && navigator.permissions.query) {
   navigator.permissions.query({ name: "geolocation" }).then(p => { if (p.state === "granted") startLocating(); }).catch(() => {});
 }
-const retheme = () => { readColors(); setTiles(); renderAll(); if (me) meAcc.setStyle({ color: C.me, fillColor: C.me }); };
+const retheme = () => { readColors(); setTiles(); paintWater(); renderAll(); if (me) meAcc.setStyle({ color: C.me, fillColor: C.me }); };
 matchMedia("(prefers-color-scheme: dark)").addEventListener("change", retheme);
 </script>
 </body>
