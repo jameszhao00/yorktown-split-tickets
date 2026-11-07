@@ -394,6 +394,7 @@ IDS.forEach(id => {
     icon: L.divIcon({ className: "edlab", html: String(+id.slice(2)), iconSize: [40, 18], iconAnchor: [20, 9] }) }).addTo(map);
 });
 const townBounds = L.featureGroup(Object.values(polys)).getBounds();
+map.fitBounds(townBounds); // a view right away, so every layer is drawn before anything paints
 // reservoirs and lakes sit over the district colors, so water reads as water
 map.createPane("water"); map.getPane("water").style.zIndex = 420; map.getPane("water").style.pointerEvents = "none";
 const waters = DATA.lakes.map(l => L.polygon(l.g.split(";").map(r => {
@@ -754,7 +755,7 @@ if (sr && RACES[sr]) { state.race = sr; document.getElementById("race").value = 
 if (sv && (VIEWS[sv] || sv === "cmp")) { state.view = sv; document.querySelectorAll("#views button").forEach(x => x.setAttribute("aria-pressed", x.dataset.view === sv ? "true" : "false")); }
 
 readColors(); setTiles(); paintWater(); renderStops(); renderTripBtn(); renderAll(); renderLocBtn();
-requestAnimationFrame(fitTown);
+fitTown(); setTimeout(fitTown, 300);
 locMsg("Tap Start driving to follow your location.");
 // pick tracking back up if location was already allowed and on last time
 if (store.get("yt-drive") !== "0" && navigator.permissions && navigator.permissions.query) {
