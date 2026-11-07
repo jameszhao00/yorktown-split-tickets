@@ -1,0 +1,666 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Election-district map of 2026 ticket splitting in Yorktown, NY.">
+<style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>Yorktown Split Tickets</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Public+Sans:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: map-first civic report — map on the left, readout + legend on the right; district guide, table and notes below. */
+:root {
+  --bg: #F2F4F3;
+  --surface: #FFFFFF;
+  --ink: #1A2127;
+  --muted: #5A6670;
+  --rule: #D3D9DC;
+  --dem: #2A5DAC;
+  --rep: #BF3A30;
+  --zero: #E4E8E9;
+  --amber: #D58A12;
+  --teal: #11807A;
+  --water: #CBDFE6;
+  --water-line: #7AA4B2;
+  --road: #66717A;
+  --edge: #FFFFFF;
+  --label: #1A2127;
+  --halo: rgba(255,255,255,.8);
+  --chip: #E9EDEE;
+  --me: #6D3FD8;
+  --me-ring: #FFFFFF;
+  --font-display: "Barlow Condensed", "Arial Narrow", "Roboto Condensed", sans-serif;
+  --font-body: "Public Sans", "Segoe UI", system-ui, -apple-system, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #11161A; --surface: #182026; --ink: #E5EAED; --muted: #98A5AE; --rule: #2B353C;
+    --dem: #6E9BE3; --rep: #E46A5F; --zero: #283137; --amber: #E8A83A; --teal: #2FB2A7;
+    --water: #1E3239; --water-line: #44707D; --road: #8C98A2; --edge: #11161A;
+    --label: #EEF2F4; --halo: rgba(10,14,17,.75); --chip: #222B31; --me: #B596FF; --me-ring: #11161A; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #11161A; --surface: #182026; --ink: #E5EAED; --muted: #98A5AE; --rule: #2B353C;
+  --dem: #6E9BE3; --rep: #E46A5F; --zero: #283137; --amber: #E8A83A; --teal: #2FB2A7;
+  --water: #1E3239; --water-line: #44707D; --road: #8C98A2; --edge: #11161A;
+  --label: #EEF2F4; --halo: rgba(10,14,17,.75); --chip: #222B31; --me: #B596FF; --me-ring: #11161A; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 15px; line-height: 1.5; }
+.wrap { max-width: 1200px; margin: 0 auto; padding-block: 28px 56px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.eyebrow { font-family: var(--font-display); font-weight: 600; text-transform: uppercase; letter-spacing: .08em; font-size: 14px; color: var(--muted); }
+h1 { font-family: var(--font-display); font-weight: 700; font-size: clamp(34px, 5vw, 52px); line-height: 1; margin: 6px 0 12px; letter-spacing: -.005em; text-wrap: balance; }
+.lede { max-width: 70ch; margin: 0 0 10px; }
+.lede b { font-weight: 600; }
+.r { color: var(--rep); font-weight: 600; } .d { color: var(--dem); font-weight: 600; }
+.num { font-variant-numeric: tabular-nums; }
+
+.grid { display: grid; gap: 18px 28px; grid-template-columns: minmax(0, 1.08fr) minmax(0, .92fr);
+  grid-template-areas: "map controls" "map readout" "map legend" "map findings"; grid-template-rows: auto auto auto 1fr; align-items: start; margin-top: 22px; }
+.mapbox { grid-area: map; min-width: 0; }
+.controls { grid-area: controls; min-width: 0; display: grid; gap: 14px; }
+.readout { grid-area: readout; min-width: 0; }
+.legend { grid-area: legend; min-width: 0; }
+.findings { grid-area: findings; min-width: 0; }
+
+.label-sm { font-family: var(--font-display); font-weight: 600; font-size: 13px; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); margin: 0 0 6px; }
+.seg { display: flex; flex-wrap: wrap; gap: 4px; padding: 3px; background: var(--chip); border-radius: 8px; width: fit-content; max-width: 100%; }
+.seg button { font: 600 14px/1 var(--font-body); color: var(--muted); background: transparent; border: 0; border-radius: 6px; padding: 9px 12px; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 1px 2px rgba(0,0,0,.12); }
+.seg button:focus-visible, select:focus-visible, input:focus-visible, .chip:focus-visible, th button:focus-visible, tbody tr:focus-visible, .gcard:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+.row-ctl { display: flex; flex-wrap: wrap; gap: 14px 22px; align-items: end; }
+select, input[type="search"] { font: 500 15px var(--font-body); color: var(--ink); background: var(--surface); border: 1px solid var(--rule); border-radius: 7px; padding: 8px 10px; }
+select { padding-right: 30px; }
+.find { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; }
+.find input { flex: 1 1 200px; min-width: 0; }
+.find .hits { font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.check { display: inline-flex; gap: 7px; align-items: center; font-size: 14px; color: var(--ink); cursor: pointer; }
+.check input { width: 16px; height: 16px; accent-color: var(--ink); }
+
+.readout { background: var(--surface); border: 1px solid var(--rule); border-radius: 10px; padding: 14px 16px; }
+.ro-head { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: baseline; justify-content: space-between; margin-bottom: 10px; }
+.ro-title { font-family: var(--font-display); font-weight: 700; font-size: 24px; line-height: 1.05; }
+.ro-sub { color: var(--muted); font-size: 13px; }
+.pill { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 600; padding: 3px 9px; border-radius: 999px; background: var(--chip); color: var(--ink); white-space: nowrap; }
+.pill i { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
+.where { font-size: 13.5px; margin: 0 0 4px; color: var(--ink); }
+.where b { font-weight: 600; color: var(--muted); }
+.where.clip { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.where-box { padding-bottom: 8px; margin-bottom: 8px; border-bottom: 1px solid var(--rule); }
+.race { display: grid; grid-template-columns: 7.5em minmax(0,1fr) 4.2em; gap: 10px; align-items: center; margin: 7px 0; font-size: 14px; }
+.race .nm { color: var(--muted); font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.race .mg { text-align: right; font-weight: 700; font-variant-numeric: tabular-nums; }
+.bar { position: relative; height: 12px; border-radius: 3px; overflow: hidden; display: flex; background: var(--zero); }
+.bar span { display: block; height: 100%; }
+.bar::after { content: ""; position: absolute; left: 50%; top: -2px; bottom: -2px; width: 1px; background: var(--ink); opacity: .55; }
+.race-votes { grid-column: 2 / 4; color: var(--muted); font-size: 12.5px; margin-top: -5px; font-variant-numeric: tabular-nums; }
+.gapline { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--rule); font-size: 14px; }
+.gapline b { font-variant-numeric: tabular-nums; }
+
+@media (max-width: 860px) {
+  .grid { grid-template-columns: minmax(0, 1fr); grid-template-areas: "controls" "readout" "map" "legend" "findings"; grid-template-rows: none; }
+  .readout { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; box-shadow: 0 6px 16px -10px rgba(0,0,0,.35); padding: 10px 12px; }
+  .ro-title { font-size: 20px; }
+  .ro-head { margin-bottom: 4px; }
+  .race { margin: 4px 0; grid-template-columns: 6.5em minmax(0,1fr) 4.2em; }
+  .race-votes, .where.wide { display: none; }
+  .where { font-size: 12.5px; margin-bottom: 2px; }
+  .where-box { padding-bottom: 5px; margin-bottom: 5px; }
+  .gapline { margin-top: 6px; padding-top: 6px; font-size: 13px; }
+}
+
+.mapbox { position: relative; }
+.mapbox svg { display: block; width: 100%; height: auto; max-height: 86vh; touch-action: manipulation; }
+.ed { stroke: var(--edge); stroke-width: 1.1; vector-effect: non-scaling-stroke; cursor: pointer; transition: fill .25s, opacity .2s; }
+.ed:hover { stroke: var(--ink); stroke-width: 1.6; }
+.ed:focus { outline: none; }
+.ed:focus-visible { stroke: var(--ink); stroke-width: 2.4; }
+svg.searching .ed { opacity: .28; }
+svg.searching .ed.hit { opacity: 1; stroke: var(--ink); stroke-width: 1.8; }
+.water { fill: url(#waterfill); stroke: var(--water-line); stroke-width: .8; vector-effect: non-scaling-stroke; pointer-events: none; }
+.road { fill: none; stroke: var(--road); stroke-width: 1.3; vector-effect: non-scaling-stroke; stroke-linejoin: round; stroke-linecap: round; pointer-events: none; opacity: .85; }
+.road.tsp { stroke-width: 2.4; opacity: 1; }
+#selring { fill: none; stroke: var(--ink); stroke-width: 3; vector-effect: non-scaling-stroke; pointer-events: none; }
+.lab { pointer-events: none; paint-order: stroke; stroke: var(--halo); stroke-linejoin: round; }
+.lab.ed-n { font: 700 calc(var(--u, 14) * 11px) var(--font-display); fill: var(--label); stroke-width: calc(var(--u, 14) * 2.6px); }
+.lab.rd { font: 700 calc(var(--u, 14) * 10px) var(--font-display); fill: var(--road); stroke-width: calc(var(--u, 14) * 3px); letter-spacing: .02em; }
+.lab.rd.tsp { font-size: calc(var(--u, 14) * 11px); fill: var(--ink); }
+.lab.lk { font: italic 500 calc(var(--u, 14) * 10px) var(--font-body); fill: var(--water-line); stroke-width: calc(var(--u, 14) * 2.6px); }
+.lab.hm { font: 700 calc(var(--u, 14) * 11.5px) var(--font-display); text-transform: uppercase; letter-spacing: .12em; fill: var(--ink); opacity: .82; stroke-width: calc(var(--u, 14) * 3.2px); }
+.lab.mk { font: 400 calc(var(--u, 14) * 8px) var(--font-body); fill: var(--ink); stroke-width: calc(var(--u, 14) * 2.4px); }
+.lab.lm { font: 600 calc(var(--u, 14) * 9.5px) var(--font-body); fill: var(--ink); stroke-width: calc(var(--u, 14) * 2.6px); }
+#gMarks[hidden] { display: none; }
+.me-acc { fill: var(--me); opacity: .16; stroke: var(--me); stroke-width: 1; vector-effect: non-scaling-stroke; pointer-events: none; }
+.me-dot { fill: var(--me); stroke: var(--me-ring); stroke-width: calc(var(--u, 14) * 2.5px); pointer-events: none; }
+.me-pulse { fill: none; stroke: var(--me); stroke-width: calc(var(--u, 14) * 2px); opacity: .5; pointer-events: none; }
+.locbtn { font: 600 14px var(--font-body); color: var(--surface); background: var(--me); border: 0; border-radius: 7px; padding: 9px 14px; cursor: pointer; display: inline-flex; gap: 8px; align-items: center; }
+.locbtn[aria-pressed="true"] { background: var(--surface); color: var(--me); box-shadow: inset 0 0 0 1.5px var(--me); }
+.locbtn:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+.locbtn .dot { width: 10px; height: 10px; border-radius: 50%; background: currentColor; }
+.locmsg { font-size: 13.5px; color: var(--ink); }
+.locmsg.err { color: var(--rep); }
+.youhere { color: var(--me); font-weight: 700; }
+@media (prefers-reduced-motion: no-preference) { .me-pulse { animation: mepulse 2s ease-out infinite; transform-box: fill-box; transform-origin: center; } }
+@keyframes mepulse { from { transform: scale(.6); opacity: .6; } to { transform: scale(2.2); opacity: 0; } }
+.maphint { font-size: 12.5px; color: var(--muted); margin-top: 6px; }
+.maphint .k { white-space: nowrap; }
+
+.legend .sw { display: grid; gap: 6px; }
+.legend .item { display: flex; gap: 9px; align-items: center; font-size: 14px; }
+.legend .item i { flex: none; width: 16px; height: 16px; border-radius: 3px; border: 1px solid rgba(0,0,0,.08); }
+.legend .item .ct { margin-left: auto; color: var(--muted); font-variant-numeric: tabular-nums; }
+.ramp { height: 12px; border-radius: 3px; }
+.ramp-ticks { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); margin-top: 4px; font-variant-numeric: tabular-nums; }
+.ramp-caps { display: flex; justify-content: space-between; font-size: 13px; margin-top: 2px; gap: 12px; }
+
+.findings p { margin: 0 0 10px; max-width: 62ch; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0 12px; }
+.chip { font: 600 13px var(--font-body); border: 1px solid var(--rule); background: var(--surface); color: var(--ink); border-radius: 6px; padding: 4px 9px; cursor: pointer; font-variant-numeric: tabular-nums; }
+.chip:hover { border-color: var(--ink); }
+.chip.none { cursor: default; color: var(--muted); }
+
+h2 { font-family: var(--font-display); font-weight: 700; font-size: 28px; line-height: 1.1; margin: 40px 0 6px; text-wrap: balance; }
+.sect-lede { color: var(--muted); max-width: 70ch; margin: 0 0 12px; }
+
+.guide { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 330px), 1fr)); gap: 10px; }
+.gcard { background: var(--surface); border: 1px solid var(--rule); border-radius: 10px; padding: 12px 14px; cursor: pointer; display: grid; gap: 4px; align-content: start; font-size: 13.5px; }
+.gcard:hover { border-color: var(--ink); }
+.gcard.sel { box-shadow: inset 3px 0 0 var(--ink); border-color: var(--ink); }
+.gh { display: flex; gap: 10px; align-items: baseline; }
+.gnum { font: 700 26px/1 var(--font-display); font-variant-numeric: tabular-nums; min-width: 1.6em; }
+.gwhere { font-weight: 600; flex: 1; min-width: 0; }
+.gl b { color: var(--muted); font-weight: 600; }
+.gl.dim { color: var(--muted); }
+.mute { color: var(--muted); }
+
+.tablewrap { overflow-x: auto; border: 1px solid var(--rule); border-radius: 10px; background: var(--surface); margin-top: 12px; }
+table { border-collapse: collapse; width: 100%; min-width: 720px; font-size: 14px; font-variant-numeric: tabular-nums; }
+th, td { padding: 8px 12px; text-align: right; border-bottom: 1px solid var(--rule); white-space: nowrap; }
+th:first-child, td:first-child, th:last-child, td:last-child { text-align: left; }
+thead th { position: sticky; top: 0; background: var(--surface); font-weight: 600; color: var(--muted); font-size: 13px; }
+th button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
+th button[aria-sort] { color: var(--ink); }
+tbody tr { cursor: pointer; }
+tbody tr:hover { background: var(--chip); }
+tbody tr.sel { background: var(--chip); box-shadow: inset 3px 0 0 var(--ink); }
+.gapcell { display: inline-flex; align-items: center; gap: 8px; justify-content: flex-end; }
+.gapcell .mini { width: 46px; height: 8px; background: var(--zero); border-radius: 2px; position: relative; overflow: hidden; }
+.gapcell .mini span { position: absolute; top: 0; bottom: 0; }
+.gapcell .mini::after { content: ""; position: absolute; left: 50%; top: 0; bottom: 0; width: 1px; background: var(--muted); }
+.notes { margin-top: 36px; color: var(--muted); font-size: 13.5px; max-width: 78ch; }
+.notes h3 { font-family: var(--font-display); font-weight: 700; font-size: 18px; color: var(--ink); margin: 0 0 6px; letter-spacing: .01em; }
+.notes ul { padding-left: 18px; margin: 6px 0 0; }
+.notes li { margin: 4px 0; }
+.notes a { color: inherit; }
+@media (prefers-reduced-motion: reduce) { .ed { transition: none; } }
+</style>
+
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Town of Yorktown · Nov 3, 2026 general election · unofficial</div>
+    <h1>Yorktown Split Tickets</h1>
+    <p class="lede">
+      <b>Ed Lachterman</b> <span class="r">(R)</span> won supervisor by <b class="num">5.6 points</b>.
+      The federal and statewide races were much closer inside Yorktown: <b>Mike Lawler</b> <span class="r">(R)</span> carried the town by <span class="num">1.1</span> in the House race and <b>Bruce Blakeman</b> <span class="r">(R)</span> by <span class="num">0.9</span> for governor,
+      while Westchester as a whole went <span class="d num">66–34</span> for Hochul and <span class="d num">63–37</span> for Conley.
+    </p>
+    <p class="lede">
+      The <b>Taconic State Parkway</b> runs north to south through the middle of town. Mohegan Lake and Shrub Oak sit on its west side; Jefferson Valley and downtown Yorktown Heights are east of it.
+      Search for a street, school, park or restaurant to find its district.
+    </p>
+  </header>
+
+  <div class="grid">
+    <section class="controls" aria-label="Map controls">
+      <div class="find">
+        <button type="button" class="locbtn" id="locate" aria-pressed="false"><span class="dot" aria-hidden="true"></span><span id="loctext">Show my location</span></button>
+        <span class="locmsg" id="locmsg" role="status"></span>
+      </div>
+      <div class="find">
+        <input type="search" id="find" placeholder="Find a street or place, e.g. London Rd, Trader Joe's" aria-label="Find a street or place" autocomplete="off">
+        <span class="hits" id="hits"></span>
+      </div>
+      <div class="row-ctl">
+        <div>
+          <p class="label-sm" id="viewlab">Color districts by</p>
+          <div class="seg" role="group" aria-labelledby="viewlab" id="views">
+            <button type="button" data-view="split" aria-pressed="true">Split</button>
+            <button type="button" data-view="gap" aria-pressed="false">Gap</button>
+            <button type="button" data-view="sup" aria-pressed="false">Supervisor</button>
+            <button type="button" data-view="cmp" aria-pressed="false" id="cmpbtn">House</button>
+          </div>
+        </div>
+        <div>
+          <p class="label-sm"><label for="race">Compare supervisor with</label></p>
+          <select id="race">
+            <option value="CD17" selected>House, NY-17</option>
+            <option value="GOV">Governor</option>
+            <option value="AG">Attorney General</option>
+            <option value="CMP">Comptroller</option>
+            <option value="SD40">State Senate, SD-40</option>
+          </select>
+        </div>
+        <label class="check"><input type="checkbox" id="showmarks" checked> Landmarks</label>
+      </div>
+    </section>
+
+    <section class="readout" id="readout" aria-live="polite"></section>
+
+    <figure class="mapbox" style="margin:0">
+      <svg id="map" role="img" aria-label="Map of Yorktown election districts with the Taconic State Parkway, main roads, hamlets and landmarks"></svg>
+      <figcaption class="maphint">Tap or click a district for its numbers and what's there; tap outside the town to go back to the town total.
+        Landmarks: <span class="k">● park</span> · <span class="k">■ school</span> · <span class="k">◆ shopping</span> · <span class="k">▲ town services</span></figcaption>
+    </figure>
+
+    <section class="legend" id="legend" aria-label="Legend"></section>
+    <section class="findings" id="findings"></section>
+  </div>
+
+  <h2>District guide</h2>
+  <p class="sect-lede">Where each district sits, its main streets, and the parks, schools, shops and places to eat inside it. Distances are from the middle of the district. Click a card to show it on the map.</p>
+  <div class="guide" id="guide"></div>
+
+  <h2 id="tabletitle">District by district</h2>
+  <div class="tablewrap">
+    <table id="tbl">
+      <thead><tr id="thead"></tr></thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </div>
+
+  <section class="notes">
+    <h3>How to read this</h3>
+    <ul>
+      <li><b>Margin</b> is two-party: Democratic votes minus Republican votes, as a share of the two combined. Write-ins are left out. Each candidate's votes are summed across every line they appeared on (Lachterman: Republican and Conservative; Mirchandani: Democratic and Community First; Lawler: Republican and Conservative; Conley: Democratic and Working Families).</li>
+      <li><b>Split</b> marks districts where the supervisor winner and the comparison-race winner came from different parties.</li>
+      <li><b>Gap</b> is how many points more Republican the supervisor race was than the comparison race in the same district. Amber means Lachterman ran ahead of his party's candidate; teal means Mirchandani ran ahead of hers.</li>
+      <li><b>Net crossover voters</b> is the gap in Republican share times the district's two-party vote. It is a floor, not a count: voters who split in opposite directions cancel out, and some people skip the supervisor race or the other one.</li>
+      <li><b>Taconic</b> distances are measured from the middle of each district to the nearest point on the parkway. "Taconic runs through it" means the parkway crosses the district.</li>
+      <li>Landmarks and restaurants come from OpenStreetMap, which covers schools and parks well but lists only some of the town's restaurants. A district with no food listed may still have places to eat.</li>
+      <li><b>Your location</b> is read by your own browser only after you tap “Show my location”. The page never sends or saves it.</li>
+      <li>Results are unofficial. They include early, Election Day and absentee ballots; affidavit ballots had not been added yet, so totals can still move a little.</li>
+    </ul>
+    <h3 style="margin-top:16px">Sources</h3>
+    <ul>
+      <li>Votes: <a href="https://app.enhancedvoting.com/results/public/westchester-county-ny/elections/2026GeneralElection" target="_blank" rel="noopener">Westchester County Board of Elections results</a>, election-district breakdowns, published Nov 7, 2026 at 10:01 AM ET (42 of 42 districts reporting).</li>
+      <li>District boundaries, streets, roads and water: <a href="https://giswww.westchestergov.com/arcgis/rest/services/Datahub_Boundaries/MapServer/0" target="_blank" rel="noopener">Westchester County GIS</a> (election district linework current as of April 2023), simplified for display.</li>
+      <li>Hamlets, landmarks and restaurants: © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap contributors</a>.</li>
+    </ul>
+  </section>
+</div>
+
+<script>
+const DATA = {"K":0.75159,"Ymax":14485,"vb":[387,0,8594,14400],"eds":{"YT18":{"g":"1789,7876,417,-2140,69,21,158,-24,152,104,79,24,83,55,61,13,40,41,222,50,66,60,166,-23,77,6,31,-11,38,-51,104,-14,52,-79,66,-23,64,-50,59,-13,65,-52,72,-12,105,-47,91,-80,139,56,49,5,150,-35,292,-27,92,74,390,42,39,-12,60,-61,77,-33,354,-51,-214,-474,217,79,201,130,144,52,17,29,53,139,16,149,-103,507,-2,137,32,151,161,425,10,83,-21,134,-55,118,-155,156,-163,86,-506,120,-119,47,-107,64,-211,28,-23,-70,-400,-5,46,-243,-754,-26,-384,464,-31,431,-21,72,-13,23,-86,45,-36,51,-136,300,-52,77,324,60,266,140,0,37,-718,-163,-318,-5,-170,29,-615,203,-303,71,250,-1364","lp":[4634,6559],"r":870},"YT14":{"g":"7491,12282,-292,-236,-57,-27,-22,158,-84,29,-445,266,131,-806,66,-210,494,59,3,-179,496,56,-7,130,95,582,2,217,-380,-39","lp":[7423,11790],"r":295},"YT05":{"g":"7852,11992,137,-14,154,6,71,-20,199,-118,163,-6,0,95,79,220,-105,599,470,184,162,47,-125,756,-678,-40,12,-126,-338,-16,-107,-31,-62,-47,-31,-82,-2,-117,110,-274,8,-189,-102,-525,2,-190,-17,-112","lp":[8450,13171],"r":399},"YT39":{"g":"7781,11392,50,-428,802,21,217,144,-11,115,-55,28,33,57,27,223,242,14,16,102,317,23,-237,1294,-162,-47,-470,-184,105,-599,-79,-220,0,-95,-163,6,-199,118,-71,20,-154,-6,-137,14,-78,-470,7,-130","lp":[8309,11419],"r":386},"YT42":{"g":"6591,12472,-159,84,-56,-77,-264,-507,-285,1,-150,-104,-103,-9,23,-130,-19,-267,81,-189,302,96,440,5,36,125,344,-2,-59,168,-131,806","lp":[5996,11659],"r":288},"YT37":{"g":"7001,11485,-48,-137,-1,-73,111,13,73,-66,72,-112,106,-211,75,-191,78,-102,135,-349,16,-9,-17,-269,88,9,7,147,82,179,76,411,-73,667,-496,-56,-3,179,-281,-30","lp":[7516,11131],"r":220},"YT15":{"g":"8792,10110,-1650,-177,-61,-473,62,-25,309,35,77,-77,90,-28,53,11,21,41,141,-7,129,34,215,-317,28,-231,174,-87,55,-47,66,0,30,-36,118,-350,41,-50,0,-53,46,-95,20,-10,71,58,153,59,335,301,6,163,-13,227,-45,69,-27,17,-332,-35,-58,323,18,315,-72,445","lp":[8369,9673],"r":368},"YT02":{"g":"6116,5376,332,70,298,160,387,250,460,400,406,231,368,232,-61,360,-31,37,-71,40,-16,123,-290,-33,-143,9,-80,51,-37,89,-202,-57,-136,-68,-525,-67,-132,-68,-44,-38,-125,-228,-83,-44,-133,-5,-129,-332,-32,-151,2,-137,103,-536,-26,-159,-60,-129","lp":[7175,6688],"r":534},"YT29":{"g":"6116,5376,-277,-423,-117,-143,25,-44,-91,-109,-57,-109,-19,-126,6,-70,33,-142,86,-234,22,-174,367,-45,434,-88,151,-58,134,-107,51,-93,80,-36,93,-12,503,77,516,-152,102,110,10,228,-2,47,-36,47,-11,56,27,102,-10,125,25,258,-10,219,-48,251,25,128,-23,220,5,92,51,215,176,389,315,390,87,169,16,246,-56,283,-332,-144,-368,-232,-372,-209,-529,-449,-417,-261,-233,-122,-332,-70","lp":[6929,4539],"r":900},"YT06":{"g":"6258,6820,133,5,83,44,125,228,44,38,132,68,525,67,136,68,312,94,149,272,239,232,65,-16,110,129,141,31,90,40,157,25,35,41,-44,87,0,53,-41,50,-52,180,-82,193,-39,21,-41,-8,-55,47,-164,76,-46,-25,-41,-124,-138,-202,-72,-167,-26,-109,-90,-58,-91,-110,-107,81,-164,337,-82,418,-36,87,-210,362,-45,44,-84,46,-92,22,-92,1,-1684,-186,-154,-34,-120,-51,144,-221,66,-171,-4,-190,-103,-463,7,-131,54,-137,143,-164,132,-83,149,-57,448,-99,142,-65,113,-85,91,-103,60,-135,15,-144,-41,-149","lp":[6204,8421],"r":892},"YT26":{"g":"8201,7920,142,-56,346,-173,315,-290,-66,-71,-11,-34,35,-205,96,-7,28,15,65,114,102,53,-30,59,-11,94,314,19,-3,208,-122,-5,9,85,84,-48,80,72,51,22,441,29,14,-72,44,0,-168,884,-619,-13,-371,-323,-139,-51,-71,-58,-24,9,-47,-41,-143,-16,-90,-40,-141,-31,-110,-129","lp":[9499,8154],"r":383},"YT08":{"g":"5174,7721,-153,117,-127,36,-93,148,-30,286,-296,-2,-421,30,-26,162,-21,45,-67,35,-179,-9,-8,91,39,67,-42,31,-23,42,-60,272,-280,-147,-314,-57,52,-77,136,-300,36,-51,86,-45,13,-23,21,-72,31,-431,384,-464,754,26,-46,243,400,5,23,70,211,-28","lp":[4071,7905],"r":417},"YT30":{"g":"3667,9072,60,-272,23,-42,42,-31,-39,-67,8,-91,179,9,67,-35,21,-45,26,-162,421,-30,296,2,25,-268,30,-67,77,-107,118,-28,128,-98,-143,164,-42,90,-18,87,5,134,103,458,-2,152,-66,171,-99,142,-89,175,-33,105,-48,328,-36,55,-64,24,-61,-9,-288,-212,-356,-167,-92,-76,-102,-113,92,-48,78,-18,-5,-52,-87,0,-133,-25,4,-33","lp":[4369,8887],"r":438},"YT25":{"g":"4717,9746,-44,295,-86,252,35,4,-46,219,6,278,-581,-264,-1214,-51,-6,86,-30,0,0,-49,-27,-23,-75,5,-26,55,1,-102,-532,-10,-754,-103,201,-1098,303,-71,502,-170,202,-51,225,-18,174,12,387,97,437,87,114,4,5,52,-78,18,-92,48,102,113,92,76,356,167,288,212,102,-1,59,-69","lp":[2859,9722],"r":750},"YT35":{"g":"7081,9460,-50,26,-16,-34,73,-49,51,-64,213,-392,95,-452,158,-324,107,-81,91,110,90,58,26,109,72,167,138,202,25,102,62,47,-38,242,-215,317,-129,-34,-141,7,-21,-41,-53,-11,-90,28,-77,77,-309,-35,-62,25","lp":[7766,9032],"r":319},"YT04":{"g":"7081,9460,78,546,-127,185,-73,457,-71,318,-275,-28,-5,-111,-48,-88,-79,-98,-138,-100,-80,-5,-35,227,-18,11,-137,-9,22,-152,8,-446,75,-748,640,71,99,-7,98,-31,16,34,50,-26","lp":[6643,9922],"r":376},"YT16":{"g":"8367,6719,286,115,296,185,13,116,-35,161,11,34,66,71,-325,296,-390,192,-153,47,-239,-232,-137,-261,-122,-48,37,-89,80,-51,143,-9,290,33,16,-123,71,-40,31,-37,61,-360","lp":[8560,7358],"r":283},"YT10":{"g":"5416,13909,-143,-231,-56,-135,-8,-119,28,-192,205,25,206,-16,131,-38,425,-188,171,-44,191,-20,157,-1,168,21,280,93,384,236,310,244,232,110,221,42,739,45,-90,524,-3551,-356","lp":[6748,13509],"r":529},"YT09":{"g":"5416,13909,-2689,-269,19,-131,-47,-321,27,-338,113,-7,353,-146,432,-43,61,15,91,64,141,191,33,23,644,18,298,157,-6,49,351,61,-28,192,8,119,56,135,143,231","lp":[3378,13187],"r":483},"YT27":{"g":"6685,12949,-35,-213,-65,-227,6,-37,111,-68,118,155,37,138,-6,101,229,26,99,42,126,-33,70,-77,-25,-67,-154,-172,211,-110,84,-125,380,39,95,458,4,127,-9,102,-102,231,-10,106,15,101,50,63,85,39,392,27,-12,126,-248,-37,-186,-73,-135,-85,-363,-280,-276,-162,-211,-77,-275,-38","lp":[7623,12956],"r":257},"YT36":{"g":"6685,12949,-358,33,-224,70,-346,159,-168,39,-184,6,-146,-20,-7,-117,-40,-124,-67,-115,-115,-113,211,-372,193,-125,52,-51,88,-359,29,-1,74,10,150,104,285,-1,264,507,56,77,159,-84,-6,37,65,227,35,213","lp":[5775,12662],"r":461},"YT31":{"g":"9626,10492,-31,56,-296,121,-97,0,-124,-57,-127,-14,-23,-20,-71,-146,-67,-187,-1,-121,75,-459,-18,-315,58,-323,332,35,40,-31,32,-55,7,-390,57,21,584,6,-29,249,-301,1630","lp":[9343,9419],"r":358},"YT20":{"g":"9626,10492,-207,1199,-317,-23,-16,-102,-242,-14,-27,-223,-33,-57,55,-28,11,-115,-217,-144,-802,-21,23,-239,-76,-411,-82,-179,-7,-147,1103,122,5,173,142,311,139,18,124,57,97,0,130,-47,166,-74,31,-56","lp":[8367,10584],"r":394},"YT43":{"g":"5727,3802,-22,174,-86,234,-33,142,-6,70,19,126,57,109,91,109,-25,44,117,143,277,423,-144,-52,-201,-130,-217,-79,214,474,-354,51,-77,33,-60,61,-39,12,-390,-42,-92,-74,-292,27,-150,35,-49,-5,-139,-56,-91,80,-105,47,-72,12,-65,52,-59,13,-64,50,-60,20,-58,82,-104,14,-54,60,-92,-4,-150,23,-31,-5,-51,-55,-222,-50,-40,-41,-61,-13,-83,-55,-79,-24,-152,-104,-158,24,-69,-21,458,-2505,2193,709,870,-138","lp":[3770,4656],"r":980},"YT33":{"g":"10416,2795,36,-36,44,2,77,80,50,28,71,84,20,72,102,58,139,40,60,35,-63,237,-113,679,-191,854,-57,344,-29,338,-129,524,-175,927,-91,-27,-85,-72,-107,-50,-453,-102,276,-601,58,-58,133,-193,-19,-79,-102,-153,-128,-302,-127,-65,-144,56,-28,34,-10,46,-243,-31,-79,-182,-49,-177,-127,-142,-27,-91,-153,-132,-117,-62,-128,37,-94,62,-70,-174,-30,69,-43,22,-155,-25,35,-189,10,-193,-5,-179,-20,-105,10,-125,-27,-88,7,-60,41,-65,-9,-267,-102,-110,234,-71,247,-215,118,-73,386,-80,279,-142,248,-57,339,39,218,65,196,112,67,62,28,-133","lp":[9536,3863],"r":998},"YT01":{"g":"807,13439,266,-1615,869,670,44,49,59,110,119,97,222,112,80,-22,260,10,-27,338,47,321,-19,131,-1920,-201","lp":[1583,13004],"r":494},"YT28":{"g":"1151,11435,514,84,52,37,21,41,-82,121,-144,-6,-57,22,-5,54,147,-58,54,-1,112,73,105,403,-246,46,-549,-427,78,-389","lp":[1550,11945],"r":174},"YT03":{"g":"6258,582,893,97,2396,309,516,50,-166,436,-79,162,-19,86,-76,118,141,33,-15,20,69,35,-8,26,-62,6,-6,73,19,36,61,35,28,131,52,19,57,-8,29,20,221,366,74,159,33,4,-28,133,-67,-62,-196,-112,-218,-65,-339,-39,-248,57,-279,142,-386,80,-118,73,-247,215,-541,170,-209,53,-503,-77,-93,12,-80,36,-51,93,-134,107,-151,58,-434,88,-1237,183,-2193,-709,524,-2926,1939,159,1131,118","lp":[5183,2213],"r":1647},"YT07":{"g":"9522,6810,-345,422,-44,-45,-47,-88,-28,-15,-96,7,-13,-72,-250,-156,56,-283,-13,-237,-83,-166,-144,-174,248,-116,50,33,112,29,91,77,91,-53,52,-69,257,68,154,7,96,-17,51,112,63,-14,127,19,-109,130,-276,601","lp":[9211,6358],"r":352},"YT34":{"g":"10258,7061,-88,458,-7,121,-21,21,-30,158,12,-90,-44,0,-14,72,-441,-29,-51,-22,-80,-72,-84,48,-9,-85,122,5,3,-208,-314,-19,11,-94,30,-59,-76,-34,345,-422,453,102,107,50,85,72,91,27","lp":[9772,7188],"r":309},"YT17":{"g":"8116,4669,155,25,43,-22,30,-69,70,174,94,-62,128,-37,117,62,153,132,27,91,127,142,49,177,79,182,243,31,10,-46,28,-34,144,-56,127,65,128,302,102,153,19,79,-17,37,-65,84,-127,-19,-63,14,-51,-112,-96,17,-154,-7,-257,-68,-52,69,-91,53,-91,-77,-112,-29,-50,-33,-248,116,-178,-228,-182,-406,-49,-237,22,-273,-24,-116,12,-74","lp":[8622,5267],"r":355},"YT38":{"g":"1338,10338,754,103,532,10,-1,102,26,-55,75,-5,27,23,0,49,30,0,6,-86,821,33,-43,583,8,179,65,289,-247,31,-553,-64,-17,3,-27,77,-345,-31,-37,198,-80,14,3,78,-60,1,-64,40,-30,142,19,217,174,175,12,83,323,-9,17,332,-260,-10,-80,22,-194,-96,-102,-66,-45,-47,-59,-110,-44,-49,-320,-243,246,-46,-100,-393,-117,-83,-54,1,-138,63,-7,-55,96,-32,101,15,94,-129,27,-3,103,68,61,-4,96,-80,17,-94,-11,-49,-32,-36,-4,-41,6,-12,53,-2,5,-21,-96,-60,12,-142,-182,-26,-36,-32,-69,-19,-135,-91,-61,-69,10,-48,86,-37,-38,-240,-132,-22,-123,-51,38,-143","lp":[2937,11032],"r":475},"YT13":{"g":"2726,12850,-17,-332,-323,9,-12,-83,-174,-175,-19,-217,30,-142,64,-40,60,-1,-3,-78,80,-14,37,-198,345,31,27,-77,17,-3,553,64,247,-31,14,76,-20,95,34,202,-13,192,59,435,-36,102,-131,-8,-353,40,-353,146,-113,7","lp":[3023,12058],"r":476},"YT22":{"g":"5237,13232,-351,-61,6,-49,-298,-157,-644,-18,-33,-23,-129,-178,-112,-81,36,-102,-59,-435,13,-192,-35,-211,21,-112,-70,-281,-17,-237,43,-583,393,18,581,264,45,308,-9,110,-57,146,-178,272,-39,-2,-24,61,-30,167,25,159,88,196,145,192,473,377,9,-13,115,113,67,115,33,92,16,129,-2,20,-22,-4","lp":[4116,11125],"r":382},"YT40":{"g":"4383,11630,102,5,-9,102,604,52,494,71,-88,359,-52,51,-193,125,-220,385,-473,-377,-166,-228,-67,-160,-25,-159,11,-100,43,-128,39,2","lp":[4900,12146],"r":355},"YT21":{"g":"4383,11630,178,-272,61,-168,5,-88,-57,-447,14,-199,38,-159,416,42,10,-62,1050,103,-5,255,-47,243,-119,156,-196,111,-147,290,-8,44,21,251,-23,130,-494,-71,-604,-52,9,-102,-102,-5","lp":[5283,10791],"r":487},"YT23":{"g":"6702,12404,334,-198,84,-29,22,-158,57,27,292,236,-84,125,-211,110,154,172,25,67,-70,77,-126,33,-99,-42,-229,-26,6,-101,-37,-138,-118,-155","lp":[6998,12442],"r":167},"YT41":{"g":"1300,10481,123,51,132,22,38,240,-94,48,-2,37,41,51,148,105,76,23,36,32,182,26,-12,142,93,56,4,16,-65,23,4,41,32,36,11,49,-17,94,-96,80,-61,4,-103,-68,-32,8,-21,-41,-52,-37,-514,-84,91,-614,38,-56,20,-284","lp":[1517,11245],"r":244},"YT11":{"g":"6178,9419,-50,434,-30,527,-1050,-103,-10,62,-451,-46,86,-252,92,-623,77,-201,88,40,151,40,1097,122","lp":[5462,9828],"r":483},"YT24":{"g":"6781,11498,-344,2,-36,-125,-440,-5,-302,-96,78,-136,168,-87,66,-67,75,-106,27,-113,137,9,18,-11,35,-227,80,5,138,100,79,98,48,88,5,111,275,28,-107,532","lp":[6304,11090],"r":271},"YT12":{"g":"6788,11456,61,-346,76,-278,107,-641,127,-185,-17,-73,459,46,17,269,-16,9,-135,349,-78,102,-75,191,-106,211,-72,112,-73,66,-111,-13,1,73,48,137,-213,-29","lp":[7307,10243],"r":208},"YT32":{"g":"10063,1038,1593,180,-566,1588,-75,352,-60,-35,-139,-40,-102,-58,-20,-72,-71,-84,-50,-28,-77,-80,-30,-7,-50,41,-28,1,-79,-164,-221,-366,-29,-20,-72,6,-44,-26,-21,-122,-61,-35,-24,-54,11,-55,62,-6,8,-26,-69,-35,15,-20,-141,-33,76,-118,19,-86,79,-162,166,-436","lp":[10641,1727],"r":580}},"lakes":[{"n":null,"g":"7153,7864,-98,210,-234,-41,-37,-170,31,-269,165,-198,34,50,-51,158,177,125,13,135","lp":[6968,7837]},{"n":"Amawalk Reservoir","g":"12978,12089,-38,146,-146,-5,-93,-51,3,-60,-147,-167,-115,-57,-200,-14,-68,-71,34,-69,255,-42,130,-105,91,-286,-48,-156,-109,-53,133,-205,140,-527,81,-27,-3,-35,-399,-213,-319,-252,-975,-598,-459,-133,-21,-279,107,-29,41,24,-8,108,357,90,172,-169,440,57,-1,92,167,251,276,231,132,55,193,206,154,54,144,106,176,-24,324,173,63,190,-73,170,6,137,-168,258,2,249,95,211,-56,89,-64,317,281,127,296,89,113,-6,67,123,-503,177,-121,-11,-85,-80,-148,16,-53,-76,-42,6,-11,48;11634,8956,4,-10,-13,-2,9,12","lp":[11356,9144]},{"n":null,"g":"8750,10787,-3,-189,-111,-267,122,-38,64,176,-5,136,84,121,-9,181,-56,17,-82,-80,-4,-57","lp":null},{"n":"New Croton Reservoir","g":"3008,5986,-113,-32,-187,31,116,-56,-62,-59,-366,-149,-22,-64,-82,-36,-96,83,-84,7,-10,-28,-53,33,-114,-89,49,-116,-103,-41,91,-76,-78,-82,10,-112,-80,-54,-45,20,-74,-82,-97,3,143,-245,103,-60,14,-101,192,-151,78,-14,-61,-8,117,-122,44,3,-13,-85,-213,-176,192,-95,153,-195,208,-53,123,-231,-199,-99,-106,-136,-232,-50,-186,-146,-141,-38,-152,124,45,178,-154,86,-234,27,-301,-29,-9,-121,306,-53,192,-208,26,-84,-25,-52,-212,-173,250,-244,291,17,202,146,85,12,165,-6,-59,-41,24,-71,798,386,-79,-335,234,267,135,57,156,254,150,67,256,-22,263,245,221,64,223,144,269,42,441,-4,480,-143,72,-146,52,-5,16,-113,-55,-23,139,-45,29,13,-17,94,94,113,245,19,273,-100,46,29,47,-41,-44,-32,232,-191,187,11,177,138,176,-14,320,-147,60,-130,56,92,83,-21,104,-93,56,47,104,-16,184,-136,5,-41,246,-151,11,-167,287,187,240,-188,68,78,18,-103,334,-56,23,-79,-128,-170,-47,-152,-58,-19,-157,-181,-92,-15,10,92,-79,39,-89,-4,-114,-71,-173,-203,18,-29,-73,-41,11,-89,58,-33,227,160,251,49,283,186,118,10,130,-65,135,51,-108,125,134,87,21,116,152,32,-3,72,209,302,80,200,38,4,45,-91,139,106,137,192,287,128,65,-4,77,162,31,240,191,198,139,-21,27,63,145,-99,-26,-150,46,-94,394,-26,36,38,-42,63,-267,15,32,167,95,41,-84,120,-19,104,482,172,126,113,91,29,338,8,67,-61,158,223,103,-18,130,-208,35,-5,34,33,-47,61,-2,187,200,233,572,156,69,52,386,-10,17,96,-185,9,150,51,-164,12,6,128,73,60,95,11,22,-54,-28,-63,60,15,258,-73,-216,-31,17,-21,116,-4,53,-48,68,48,124,-86,220,7,-82,73,-134,33,66,126,86,-3,42,354,-109,-45,-131,25,-117,-44,-84,46,-342,-82,-193,7,-76,43,14,92,-41,67,30,125,-121,-79,3,-36,79,-26,-2,-69,-53,-44,-197,41,-80,-29,-385,-197,-5,-112,-162,-4,-193,-149,-35,-70,-194,-100,178,-68,30,-82,174,24,28,-53,-439,-115,-70,43,-40,-19,-98,78,-223,-154,-588,-152,-84,-103,-135,-48,-131,-232,-395,-193,-61,-76,-178,-20,-68,-60,-1,-68,-284,-23,-110,-309,-92,-141,86,-110,-23,-82,-127,-46,-119,20,22,200,-211,-22,-52,-126,-3,-228,-124,-50,-116,62,-9,133,-75,-88,-178,-37,-64,-71,-23,54,-66,19,-41,113,-210,146,-39,83,-130,-128,-184,12,-48,38,5,221,-146,73,-74,-37,-213,41,-173,-14,-105,82,-429,22,-56,51,-348,-128,-108,30,-33,348,-260,45,-52,33,4,57,-398,-73,-445,19,-205,101,-278,52,-117,190,35,64,-51,32,-129,-132,6,-78,-168,-37,-60,38,-228,-50,419,308,-39,10,40,62,-194,93,-304,-1,-79,195,-58,-25,-272,-393,-185,-122,-15,-108,-111,-6,-360,-329,-244,-114,-92,28,-51,114,-140,14,37,126,-102,38,-13,100,-149,88,242,259,-10,65,149,304,-169,-54,-188,-142,-84,15,-39,43,25,90,-41,-7,23,50,-66,150,173,34,53,104,-74,-15,-24,79,-167,-10,-108,-117,-12,80,-95,105,29,81,147,95,-5,35,85,68,-56,-7,-19,76,38,12,83,-61,30,173,130,-4,40,56,157,40,78,71,-4,117,53,84;2177,5674,1,-70,-42,27,41,43;2495,5547,12,17,3,-18,-15,1;2070,5548,40,-107,-73,76,33,31;1958,5470,-1,-6,-6,3,7,3;1952,5251,7,26,19,2,-26,-28;2545,4959,-2,11,6,-6,-4,-5;2556,4964,5,5,1,-4,-6,-1;2439,4891,-5,7,12,7,-7,-14;2517,4669,19,12,-4,-9,-15,-3;2138,4489,5,-6,-10,3,5,3;3956,3428,44,33,-23,-34,-21,1;3368,3097,4,14,16,-7,-20,-7;2422,2721,9,-31,-56,-6,47,37;13186,4844,-35,2,26,8,9,-10;13345,4847,-180,67,212,37,50,63,110,-59,-192,-108;13737,5001,-44,25,4,55,108,35,28,168,58,59,117,-35,155,-142,-87,-115,-339,-50;3932,3904,4,26,43,11,-47,-37;2517,5012,-19,40,38,-14,-19,-26","lp":[4182,3866]},{"n":null,"g":"5530,8061,-340,-57,-58,-66,-13,-102,130,-116,320,-82,109,27,123,-50,96,88,-9,-100,73,-7,-13,-64,180,-26,200,-124,85,-149,121,-35,45,34,23,107,-147,117,-53,109,19,99,-125,87,-77,151,-159,13,-244,-54,-151,68,-87,122,-48,10","lp":[5416,7867]},{"n":null,"g":"4107,1164,123,76,-230,96,-115,-8,-117,133,-70,-7,-97,-172,192,-126,-101,-124,-152,26,-64,-101,32,-42,-19,-75,206,37,173,172,239,115;4014,1239,77,47,61,-85,-105,-9,-33,47;4004,1191,-3,-34,-53,15,56,19","lp":null},{"n":null,"g":"6210,127,-81,171,-120,0,-66,-55,-151,-331,69,-21,202,72,36,-44,-18,-59,84,27,38,66,-51,149,58,25","lp":null},{"n":null,"g":"1865,12197,-97,-387,-125,-82,29,-84,38,10,49,-63,129,70,129,-71,28,-104,-51,-121,67,-32,-317,-279,-200,-119,-43,-95,92,-56,578,223,150,240,-6,264,-49,166,-197,210,-107,180,-2,103,-95,27;1906,11102,-5,47,67,36,-62,-83","lp":[2034,11102]}],"roads":[{"n":"Taconic Pkwy","label":"Taconic","g":"6210,5881,4,-15,40,-202,1,-33,-6,-106,-85,-271,-49,-81,-4,-5,-7,-9,-38,-51,-111,-122,-251,-262,-94,-151,-26,-103,4,-123,110,-310,5,-24,8,-62,0,-43,1,-36,6,-201,1,-48,1,-16,37,-170,72,-118,118,-116,216,-205,104,-205,9,-39,9,-152,-38,-161,-272,-434,-45,-132,-14,-119,17,-135,11,-35,83,-214,24,-95,11,-72,4,-35,-10,-328,29,-178,33,-86,138,-289,30,-288,-1,-47,1,47,-30,288,-138,289,-33,86,-29,178,10,328,-4,35,-11,72,-24,95,-83,214,-11,35,-17,135,14,119,45,132,272,434,38,161,-9,152,-9,39,-104,205,-216,205,-118,116,-72,118,-37,170,-1,16,-1,48,-6,201,-1,36,0,43,-8,62,-5,24,-110,310,-4,123,26,103,94,151,251,262,111,122,38,51,7,9,4,5,49,81,85,271,6,106,-1,33,-40,202,-4,15,-36,124,-49,209,24,236,44,120,8,22,103,269,22,153,-28,145,-132,196,-246,154,-522,123,-245,134,-117,138,-48,107,-6,24,-5,24,11,203,36,150,25,108,30,141,-2,128,-13,66,-8,27,-204,366,-62,188,-7,39,-6,42,-34,208,-42,268,-42,180,-7,23,-6,19,-11,38,-65,359,55,542,-31,135,-62,110,-94,130,-70,134,-34,134,0,156,35,138,95,174,184,202,36,30,61,48,64,50,168,131,50,40,20,17,52,51,41,48,21,29,11,18,10,14,62,148,5,26,7,101,-1,15,-19,114,-13,96,0,45,9,56,8,29,30,75,150,251,10,18,-134,-188,-35,-75,-29,-68,-7,-20,-18,-105,18,-140,6,-48,1,-44,0,-32,-15,-120,-59,-129,-41,-56,-17,-22,-143,-132,-24,-19,-142,-110,-151,-127,-96,-90,-164,-222,-82,-229,11,-215,100,-207,96,-132,66,-114,28,-117,-66,-589,20,-165,74,-211,10,-27,26,-82,41,-230,19,-128,29,-201,4,-26,2,-12,64,-227,181,-307,26,-67,22,-100,2,-108,-12,-73,-41,-189,-28,-119,-4,-17,-23,-134,-1,-29,5,-54,14,-59,45,-103,24,-36,120,-127,96,-63,168,-70,512,-120,164,-97,141,-156,64,-185,1,-17,-12,-126,-61,-172,-54,-139,-49,-135,-25,-236,77,-375,26,-131,-8,-152,-7,-30,-122,-244,-21,-32,-18,-26,-51,-79,-94,-137,-79,-117,-273,-283,-157,-232,-80,-243,-24,-101,-8,-30,-64,-264,-8,-30,-8,-37,-26,-117,-12,-156,20,-167,63,-184,100,-173,314,-510,191,-547,57,-179,9,-28,61,-226,3,-27,4,-74,-2,-29,-7,-53,-22,-64,-30,-155,2,-182,72,-160,61,-77,115,-144,71,-140,34,-154,-6,-203","lp":[6171,6591]},{"n":"US 6","label":"6","g":"5048,13197,-90,-17,-18,-2,-57,-7,-110,-11,-192,-14,-203,-18,-71,-5,-67,-5,-296,-22,-244,-26,-186,-29,-78,-12,-68,-11,-227,-28,-230,-16,-189,-19,-87,-15,-55,-12,-148,-50,-47,-20,-43,-17,-38,-18,-49,-24,-51,-24,-112,-75,-105,-137,26,53,14,20,70,85,81,53,31,16,123,60,36,16,80,35,42,14,231,54,81,8,74,6,219,14,130,13,283,43,103,16,55,8,281,31,165,13,264,20,88,7,51,4,83,7,98,8,184,18,168,12,63,13,76,12,37,6,8,1,23,4,67,12,35,6,67,10,12,1,79,4,175,-23,69,-21,120,-48,104,-52,118,-51,40,-15,137,-44,353,-49,164,10,161,30,181,66,312,177,438,329,180,83,184,41,68,0,67,4,57,3,38,2,36,2,70,4,239,11,171,12,66,6,37,2,325,9,87,-6,64,-4,74,-6,196,-10,11,0,194,53,54,37,66,49,55,42,74,52,24,17,33,24,20,14,75,51,63,45,21,14,29,20,30,21,26,18,12,8,48,33,130,84,26,13,25,12,87,33,34,12,23,8,48,16,45,15,27,10,9,4,30,14,24,13,18,10,10,6,21,14,13,10,22,21;441,11401,102,43,32,12,31,13,33,13,27,11,119,61,89,86,81,82,95,88,21,18,61,47,48,37,8,6,30,23,35,26,22,17,22,17,23,19,42,32,13,10,20,16,10,8,12,9,13,12,34,26,64,49,12,9,21,17,8,7,11,8,14,11,17,14,18,14,25,19,23,17,33,26,58,46,29,23,39,31,19,13,28,22,104,104;8319,13699,-35,-5,-26,-4,-178,-40,-220,-107,-528,-391,-338,-153,-196,-41,-163,-12,-187,13,-262,62,-94,36,-118,55,-101,53,-18,7,-30,13,-138,49,-63,11,-187,8,-12,-1,-103,-7","lp":[3666,13077]},{"n":"Rt 118","label":"118","g":"12109,12061,-53,299,-7,51,-25,159,-18,122,-10,95,-13,75,-8,41,-12,85,-16,70,-38,240,-16,91,-41,245,-7,43,-22,141,-1,7,-4,23,-20,101,-14,84,-15,93,-6,33,-16,90,-11,75,-10,75,-1,8,-6,36,-14,96,-71,-4,-19,-2,-37,-4,-27,-3,-9,-1,-9,-1,-18,-2,-24,-3,-23,-3,-50,-6,-17,-2,-38,-4,-25,-3,-18,-2,-21,-2,-61,-7;10669,8661,-1,39,-4,150,5,54,5,42,2,24,5,49,46,103,170,49,41,10,95,23,123,37,173,114,96,62,1108,725;10275,3205,-66,-3,-35,-1,-33,-2,-65,-6,-138,-26,-29,-5,-105,-24,-258,-42,-129,-54,-35,-25,-101,-53,-88,47,-9,7,-12,9,-18,15,-65,63,-17,19,-68,75,-191,108,-128,49,-19,7,-121,47,-148,24,-176,-35,-62,-1,7,77,3,36,-7,147,-40,99,8,60,2,7,6,173,3,22,7,35,12,119,-7,249,-10,115,-16,84,-6,34,-4,12,-14,72,25,82,-3,123,-4,28,-13,140,52,255,117,269,13,30,140,227,20,27,69,84,7,9,26,30,139,188,67,192,0,48,-24,256,-16,69,-15,64,-14,61,-50,216,-59,338,17,55,9,23,45,71,9,12,37,47,21,46,12,44,3,15,6,30,9,53,2,26,3,106,0,17,-1,41,8,104,8,12,257,148,93,82,45,40,45,36,23,19,20,17,58,56,63,33,194,0,23,0,52,2,78,3,70,0,47,1,124,2,11,1,14,2,176,28,122,-11,56,-1,68,-1","lp":[8108,5112]},{"n":"Rt 132","label":"132","g":"4998,12812,-5,6,-16,19,-22,27,-26,29,-31,36,3,83,-6,65,-2,20,-3,25,-7,49","lp":[4898,12929]},{"n":"Rt 35","label":"35","g":"8697,7683,-41,25,-24,15,-12,6,-21,12,-24,12,-73,37,-17,8,-41,21,-135,61,-109,41,-65,16,-8,2,-108,28,-93,34,-48,19,-46,19,-32,15,-88,43,-65,35,-23,22,-56,100,-9,18,-24,51,-24,51,-26,54,-22,45,-18,47,-12,34,-11,44,-13,75,-11,66,-2,10,-24,148,-16,44,-117,227,-32,57,-34,62,-48,76,-59,59,-52,30,-69,24,-97,13,-73,-4,-28,-3,-43,-5,-30,-4,-54,-6,-159,-18,-110,-13,-28,-3,-78,-8,-62,-7,-45,-4,-29,-3,-35,-4,-51,-7,-78,-8,-34,-4,-155,-17,-76,-8,-114,-13,-95,-10,-51,-6,-101,-10,-65,-7,-141,-14,-56,-8,-25,-4,-103,-34,-43,-18,-55,-24,-45,-21,-41,-19,-39,-15,-53,-18,-37,-10,-74,-15,-26,-5,-50,-9,-68,-11,-143,-10,-185,16,-67,10,-56,10,-36,8,-26,4,-22,2,-58,-1,-27,-2,-25,-4,-20,-5,-29,-5,-43,-8,-57,-13,-50,-11,-58,-11,-33,-6,-14,-3,-13,-2,-12,-3,-16,-3,-28,-6,-8,-2,-34,-7,-36,-9,-27,-6,-30,-8,-27,-6,-28,-8,-25,-7,-39,-10,-55,-14,-152,-35,-34,-3,-27,-3,-344,21,-53,13,-22,6,-25,6,-28,8,-123,41,-26,9,-28,10,-47,16,-25,8,-30,11,-35,12,-43,15,-39,12,-8,3;10407,8634,72,4,47,5,50,6,93,12,83,9,56,7,35,4,18,1,17,0,73,-6,51,-9,57,-17,10,-3,33,-11,166,16,10,4,179,56,47,6,53,7,98,10,88,-30,33,-41,18,-24,16,-23,24,-33,83,-125,2,-51,10,-50,59,-76,208,-92","lp":[5420,9334]},{"n":"Rt 129","label":"129","g":"346,1820,214,244,33,27,50,43,58,47,47,39,150,235,31,47,39,59,29,43,20,76,-34,85,-49,57;879,3455,125,76,18,2,85,-1,25,-1,104,-2,134,15,96,36,102,73,20,16,241,84,38,9,16,4,74,16,182,31,162,-13,22,-3,36,-6","lp":null},{"n":"Rt 134","label":"134","g":"5163,736,37,29,221,189,65,90,134,178,81,71,107,68,35,18,27,15,53,29,109,71,38,24,135,66,188,37,78,7,26,3,392,78,50,12,146,34,117,29,130,32,185,58,35,14,79,36,151,77,58,28,17,8,11,3,10,3,98,30,163,29,95,-16,43,-48,31,-64,76,-35,12,-3,80,-20,41,-10,74,-31,33,-54,4,-20,16,-79,-39,-229,2,-10,11,-38,62,-81,58,-37,27,-12","lp":[7782,2001]},{"n":"US 202","label":null,"g":"1982,9122,-40,15,-12,4,-21,7,-27,8,-46,15,-74,20,-71,17,-44,10,-38,9,-22,5,-39,7,-11,2","lp":null}],"res":{"YT01":{"b":567,"SUP":[279,278,0],"CD17":[296,269,1],"GOV":[297,266,0],"AG":[296,261,0],"CMP":[321,232,0],"SD40":[303,255,0]},"YT02":{"b":358,"SUP":[195,157,0],"CD17":[199,156,0],"GOV":[195,156,0],"AG":[194,155,0],"CMP":[203,144,0],"SD40":[197,151,0]},"YT03":{"b":567,"SUP":[306,246,0],"CD17":[318,245,1],"GOV":[322,237,0],"AG":[314,244,0],"CMP":[334,225,0],"SD40":[390,169,0]},"YT04":{"b":535,"SUP":[202,323,0],"CD17":[209,319,0],"GOV":[211,316,0],"AG":[206,310,0],"CMP":[246,263,0],"SD40":[220,304,0]},"YT05":{"b":738,"SUP":[317,409,0],"CD17":[336,396,0],"GOV":[337,391,0],"AG":[326,397,0],"CMP":[363,357,1],"SD40":[335,390,1]},"YT06":{"b":376,"SUP":[189,180,1],"CD17":[202,172,0],"GOV":[196,172,1],"AG":[195,172,0],"CMP":[217,145,0],"SD40":[201,170,0]},"YT07":{"b":432,"SUP":[187,235,1],"CD17":[218,211,1],"GOV":[212,211,2],"AG":[204,212,1],"CMP":[233,179,0],"SD40":[212,212,1]},"YT08":{"b":364,"SUP":[185,172,0],"CD17":[199,165,0],"GOV":[198,162,0],"AG":[187,167,0],"CMP":[212,146,0],"SD40":[199,159,0]},"YT09":{"b":637,"SUP":[301,324,0],"CD17":[316,310,0],"GOV":[327,307,0],"AG":[314,307,0],"CMP":[339,272,0],"SD40":[323,305,0]},"YT10":{"b":214,"SUP":[95,115,0],"CD17":[96,115,0],"GOV":[92,119,0],"AG":[95,114,0],"CMP":[100,107,0],"SD40":[99,112,0]},"YT11":{"b":517,"SUP":[215,301,0],"CD17":[234,280,0],"GOV":[232,282,0],"AG":[230,282,0],"CMP":[267,245,0],"SD40":[235,279,0]},"YT12":{"b":240,"SUP":[102,137,0],"CD17":[107,131,0],"GOV":[105,134,0],"AG":[105,130,0],"CMP":[117,116,0],"SD40":[109,129,0]},"YT13":{"b":490,"SUP":[237,248,0],"CD17":[246,242,1],"GOV":[254,236,0],"AG":[246,238,0],"CMP":[263,217,0],"SD40":[251,237,0]},"YT14":{"b":382,"SUP":[126,248,1],"CD17":[137,242,1],"GOV":[135,243,2],"AG":[134,241,0],"CMP":[156,215,0],"SD40":[139,237,0]},"YT15":{"b":400,"SUP":[188,199,2],"CD17":[203,194,1],"GOV":[191,201,0],"AG":[186,205,1],"CMP":[212,178,0],"SD40":[194,201,1]},"YT16":{"b":366,"SUP":[148,212,0],"CD17":[154,208,0],"GOV":[152,206,0],"AG":[153,203,0],"CMP":[180,173,0],"SD40":[161,201,0]},"YT17":{"b":479,"SUP":[217,255,0],"CD17":[223,249,0],"GOV":[224,248,0],"AG":[219,249,0],"CMP":[259,207,0],"SD40":[222,250,0]},"YT18":{"b":421,"SUP":[211,206,0],"CD17":[219,199,1],"GOV":[215,204,0],"AG":[211,207,0],"CMP":[232,183,0],"SD40":[219,201,0]},"YT20":{"b":673,"SUP":[297,367,1],"CD17":[328,343,1],"GOV":[319,346,0],"AG":[309,346,0],"CMP":[350,305,1],"SD40":[317,351,0]},"YT21":{"b":465,"SUP":[193,266,0],"CD17":[212,250,0],"GOV":[217,242,1],"AG":[198,256,0],"CMP":[235,214,0],"SD40":[209,250,0]},"YT22":{"b":379,"SUP":[173,201,0],"CD17":[171,203,0],"GOV":[171,202,4],"AG":[174,203,0],"CMP":[188,183,0],"SD40":[177,198,0]},"YT23":{"b":451,"SUP":[182,256,0],"CD17":[190,253,0],"GOV":[197,244,0],"AG":[195,234,0],"CMP":[212,219,0],"SD40":[200,245,0]},"YT24":{"b":252,"SUP":[106,144,0],"CD17":[123,128,0],"GOV":[130,121,1],"AG":[125,125,0],"CMP":[142,104,0],"SD40":[121,129,0]},"YT25":{"b":187,"SUP":[110,77,0],"CD17":[112,75,0],"GOV":[114,72,0],"AG":[112,73,0],"CMP":[122,62,0],"SD40":[108,79,0]},"YT26":{"b":323,"SUP":[162,155,1],"CD17":[168,152,0],"GOV":[165,152,0],"AG":[164,151,0],"CMP":[186,129,0],"SD40":[168,150,1]},"YT27":{"b":568,"SUP":[219,331,1],"CD17":[234,324,1],"GOV":[238,315,2],"AG":[236,308,1],"CMP":[260,283,1],"SD40":[239,315,0]},"YT28":{"b":485,"SUP":[244,228,0],"CD17":[271,207,0],"GOV":[269,211,1],"AG":[265,206,0],"CMP":[294,177,0],"SD40":[268,211,0]},"YT29":{"b":279,"SUP":[137,133,0],"CD17":[144,129,0],"GOV":[146,125,0],"AG":[138,127,0],"CMP":[153,112,0],"SD40":[148,123,0]},"YT30":{"b":292,"SUP":[133,157,0],"CD17":[142,148,0],"GOV":[139,152,0],"AG":[138,150,0],"CMP":[157,128,0],"SD40":[144,146,0]},"YT31":{"b":526,"SUP":[252,268,0],"CD17":[253,269,0],"GOV":[257,267,1],"AG":[251,264,0],"CMP":[278,235,1],"SD40":[262,262,0]},"YT32":{"b":88,"SUP":[64,23,0],"CD17":[66,22,0],"GOV":[65,23,0],"AG":[62,26,0],"CMP":[67,20,0],"SD40":[66,21,0]},"YT33":{"b":501,"SUP":[277,221,0],"CD17":[289,210,1],"GOV":[283,212,0],"AG":[269,221,0],"CMP":[314,176,0],"SD40":[285,213,0]},"YT34":{"b":330,"SUP":[153,176,0],"CD17":[156,171,0],"GOV":[157,171,0],"AG":[156,167,0],"CMP":[174,147,0],"SD40":[158,170,0]},"YT35":{"b":274,"SUP":[101,171,0],"CD17":[101,172,0],"GOV":[101,171,0],"AG":[101,167,0],"CMP":[122,148,0],"SD40":[105,163,0]},"YT36":{"b":417,"SUP":[175,230,0],"CD17":[187,226,0],"GOV":[190,225,1],"AG":[185,226,0],"CMP":[211,197,0],"SD40":[185,229,0]},"YT37":{"b":260,"SUP":[110,148,1],"CD17":[119,141,0],"GOV":[116,144,0],"AG":[114,142,0],"CMP":[130,122,0],"SD40":[116,141,0]},"YT38":{"b":653,"SUP":[375,265,0],"CD17":[392,260,0],"GOV":[380,266,0],"AG":[382,257,0],"CMP":[398,237,0],"SD40":[395,249,0]},"YT39":{"b":773,"SUP":[316,441,0],"CD17":[332,438,0],"GOV":[336,427,0],"AG":[320,434,0],"CMP":[370,378,0],"SD40":[335,427,0]},"YT40":{"b":264,"SUP":[117,145,0],"CD17":[125,138,0],"GOV":[124,134,1],"AG":[122,138,0],"CMP":[141,119,0],"SD40":[125,133,0]},"YT41":{"b":173,"SUP":[109,58,0],"CD17":[115,55,0],"GOV":[112,57,0],"AG":[112,55,0],"CMP":[119,50,0],"SD40":[119,52,0]},"YT42":{"b":365,"SUP":[165,194,1],"CD17":[182,182,0],"GOV":[183,179,0],"AG":[175,183,0],"CMP":[204,155,0],"SD40":[177,185,0]},"YT43":{"b":327,"SUP":[198,123,0],"CD17":[206,117,1],"GOV":[203,118,1],"AG":[196,122,1],"CMP":[204,112,0],"SD40":[207,111,1]}},"guide":{"YT18":{"band":"Central","side":"through","tac":"Taconic runs through it","near":"2.4 mi from Yorktown Heights center","roads":["Rt 35/202"],"P":["Fox Den Park","Mohansic Golf Course","Hunterbrook Preserve"],"S":[],"R":[],"C":[],"F":["Little Cabin Sandwiches","Dunkin' (Rt 6)","McDonald's (Rt 6)"],"streets":["Baldwin Rd","Hunterbrook Rd","Old Crompond Rd","Jacob Rd","Catherine St"],"td":0},"YT14":{"band":"North","side":"east","tac":"1.4 mi east of the Taconic","near":"1.4 mi from Jefferson Valley center","roads":[],"P":[],"S":[],"R":[],"C":[],"F":[],"streets":["London Rd","Quinlan St","Wharton Dr","Nutly Cir","Manchester Rd"],"nearest":"Chelsea Park (0.8 mi)","td":1.4},"YT05":{"band":"North","side":"east","tac":"1.7 mi east of the Taconic","near":"In Jefferson Valley","roads":["Rt 6"],"P":[],"S":["Thomas Jefferson Elementary School"],"R":[],"C":[],"F":[],"streets":["Gomer St","Curry St","Somerston Rd","Ravencrest Rd","Katrina Dr"],"td":1.7},"YT39":{"band":"North","side":"east","tac":"1.9 mi east of the Taconic","near":"1.7 mi from Jefferson Valley center","roads":[],"P":["Sparkle Lake Park"],"S":[],"R":[],"C":[],"F":[],"streets":["Gomer St","Curry St","London Rd","Poplar St","Flanders Dr"],"td":1.9},"YT42":{"band":"North","side":"east","tac":"0.8 mi east of the Taconic","near":"1.3 mi from Shrub Oak center","roads":[],"P":[],"S":[],"R":[],"C":[],"F":[],"streets":["Strang Blvd","N Deerfield Ave","Oakside Rd","London Rd","Maple Brook Ct"],"nearest":"London Woods Field (0.3 mi)","td":0.8},"YT37":{"band":"North","side":"east","tac":"1.5 mi east of the Taconic","near":"1.9 mi from Jefferson Valley center","roads":[],"P":[],"S":[],"R":[],"C":[],"F":[],"streets":["Hickory St","Hemlock St","Birch St","Quinlan St","Gomer St"],"nearest":"Chelsea Park (0.3 mi)","td":1.5},"YT15":{"band":"North","side":"east","tac":"1.8 mi east of the Taconic","near":"1.8 mi from Yorktown Heights center","roads":[],"P":["Harrison Apar Field of Dreams"],"S":["Brookside Elementary School"],"R":[],"C":[],"F":[],"streets":["Granite Springs Rd","Broad St","Ridge St","Dunning Dr","Gregory St"],"td":1.8},"YT02":{"band":"Central","side":"through","tac":"Taconic runs through it","near":"1.1 mi from Yorktown Heights center","roads":[],"P":["Donald J. Trump State Park (French Hill)"],"S":[],"R":[],"C":[],"F":[],"streets":["Underhill Ave","Baldwin Rd","Mohansic E Ave","Morningview Dr","Heights Dr"],"td":0},"YT29":{"band":"South","side":"through","tac":"Taconic runs through it","near":"2.0 mi from Kitchawan center","roads":["Rt 118"],"P":["Sanctuary Golf Course","Turkey Mountain (west unit)","Turkey Mountain (east unit)"],"S":[],"R":[],"C":[],"F":[],"streets":["Croton Lake Rd","Underhill Ave","Locke Ln","Chapman St","Chapman Rd"],"td":0},"YT06":{"band":"Central","side":"through","tac":"Taconic runs through it","near":"1.8 mi from Yorktown Heights center","roads":["Rt 35/202"],"P":["Downing Park","FDR State Park Pool","Franklin D. Roosevelt State Park"],"S":["Mildred E. Strang Middle School","Yorktown High School"],"R":[],"C":["Yorktown Police Department"],"F":[],"streets":["Crompond Rd","Van Cortlandt Cir","Baldwin Rd","E Mohansic Ave","Sultana Dr"],"td":0},"YT26":{"band":"Central","side":"east","tac":"1.8 mi east of the Taconic","near":"0.7 mi from Yorktown Heights center","roads":["Rt 118","Rt 35/202"],"P":["Jack DeVito Veterans Memorial Park","Junior Lake Park and Pool","Railroad Park"],"S":["BOCES Tech Center campus"],"R":["Acme (Yorktown Heights)","Triangle Shopping Center","Underhill Plaza"],"C":["Yorktown Stage","Goldfish Swim School","Yorktown Heights Engine Co. 1","Yorktown Heights Post Office"],"F":["Maria's Pizza","Oscar's","Jewel of Himalaya","Salsa Fresca","POW Burger","Nathan's","Starbucks (Yorktown Heights)"],"streets":["Brookside Ave","Greenwood St","Commerce St","Maple Hill St"],"td":1.8},"YT08":{"band":"Central","side":"west","tac":"0.5 mi west of the Taconic","near":"2.7 mi from Yorktown Heights center","roads":[],"P":["Hunterbrook Field"],"S":[],"R":[],"C":[],"F":[],"streets":["White Hill Rd","Mark Rd","Edcris Rd","Leland Dr","Walter Rd"],"td":-0.5},"YT30":{"band":"Central","side":"through","tac":"Taconic runs through it","near":"2.7 mi from Mohegan Lake center","roads":["Rt 35/202"],"P":[],"S":[],"R":["Trader Joe's"],"C":[],"F":["Slice","Starbucks (Rt 202)","Hudson Valley Steakhouse","Popeyes","Chipotle"],"streets":["Mohansic Ave","Old Crompond Rd","Bear Mountain State Pkwy","Park Ln"],"td":0},"YT25":{"band":"North","side":"through","tac":"Taconic runs through it","near":"1.7 mi from Mohegan Lake center","roads":["Rt 35/202","Rt 202"],"P":["Yorktown Golf and Baseball","Sylvan Glen Park Preserve","Granite Knolls Park West","Deer Hollow Park"],"S":[],"R":[],"C":[],"F":[],"streets":["Bear Mountain State Pkwy","Stoney St","Deer St","Grant Ave","Winding Ct"],"td":0},"YT35":{"band":"Central","side":"east","tac":"1.4 mi east of the Taconic","near":"1.5 mi from Yorktown Heights center","roads":["Rt 35/202"],"P":["York Hill Park"],"S":[],"R":[],"C":[],"F":[],"streets":["Elizabeth Rd","Hawthorne Dr","Yorkhill Rd","Waverly Rd","Hilltop Rd"],"td":1.4},"YT04":{"band":"North","side":"east","tac":"1.0 mi east of the Taconic","near":"2.4 mi from Yorktown Heights center","roads":[],"P":[],"S":["Mohansic Elementary School"],"R":[],"C":[],"F":[],"streets":["Old Yorktown Rd","Springhurst St","Granite Springs Rd","Cecile Dr","Heathercrest Dr"],"td":1.0},"YT16":{"band":"Central","side":"east","tac":"1.2 mi east of the Taconic","near":"In Yorktown Heights","roads":["Rt 118"],"P":[],"S":["French Hill Elementary School"],"R":["TJ Maxx","Uncle Giuseppe's","Underhill Plaza","Yorktown Green Shopping Center"],"C":[],"F":["Libri","Trailside Cafe","Our Place Kitchen & Bar","Yorktown Pizza and Pasta","Taco Bell (Yorktown Heights)","Hirame Sushi","Nonna's Pizzeria","Domino's","Primal Bowls","Rita's Italian Ice","Don Pablo Mexican Cuisine","Pappous Greek Kitchen","Yorktown Coach Diner","Burger King"],"streets":["Baldwin Rd","Allan Ave","Glen Rock St","Downing Dr"],"td":1.2},"YT10":{"band":"North","side":"through","tac":"Taconic runs through it","near":"0.7 mi from Jefferson Valley center","roads":["Rt 6"],"P":["Danner Family Preserve"],"S":[],"R":[],"C":["Jefferson Valley Post Office"],"F":[],"streets":["E Main St","Wood St","Indian Hill Rd","Hill Blvd"],"td":0},"YT09":{"band":"North","side":"through","tac":"Taconic runs through it","near":"In Shrub Oak","roads":["Rt 6"],"P":[],"S":[],"R":["Acme (Shrub Oak)"],"C":["Shrub Oak Post Office","John C. Hart Memorial Library"],"F":["Bangkok Spice"],"streets":["E Main St","New Rd","Barger St","Williams Dr"],"td":0},"YT27":{"band":"North","side":"east","tac":"1.2 mi east of the Taconic","near":"0.6 mi from Jefferson Valley center","roads":["Rt 6"],"P":[],"S":[],"R":[],"C":["Jefferson Valley Fire Station"],"F":[],"streets":["Hill Blvd","Gomer St","Long Hill Dr","Flintlock Way","Fairview Ave"],"nearest":"Thomas Jefferson Elementary School (0.3 mi)","td":1.2},"YT36":{"band":"North","side":"through","tac":"Taconic runs through it","near":"0.9 mi from Shrub Oak center","roads":["Rt 6"],"P":["The Links at Valley Fields"],"S":[],"R":["Macy's","Jefferson Valley Mall"],"C":[],"F":[],"streets":["Lee Blvd","Wildwood St","Suncrest Ave","Service Rd","Wildwood Ct"],"td":0},"YT31":{"band":"Central","side":"east","tac":"2.2 mi east of the Taconic","near":"1.6 mi from Yorktown Heights center","roads":["Rt 118"],"P":[],"S":[],"R":[],"C":[],"F":[],"streets":["Evergreen St","Broad St","Windmill Dr","Granite Springs Rd","Loder Rd"],"nearest":"Harrison Apar Field of Dreams (0.4 mi)","td":2.2},"YT20":{"band":"North","side":"east","tac":"1.9 mi east of the Taconic","near":"2.2 mi from Jefferson Valley center","roads":[],"P":["Chelsea Park","Sparkle Lake Park"],"S":[],"R":[],"C":[],"F":[],"streets":["Gomer St","Granite Springs Rd","Farm Walk Rd","Curry St","Douglas Dr"],"td":1.9},"YT43":{"band":"South","side":"through","tac":"Taconic runs through it","near":"3.1 mi from Kitchawan center","roads":[],"P":["Hemlock Brook Preserve"],"S":[],"R":[],"C":[],"F":[],"streets":["Croton Lake Rd","Hunterbrook Rd","Baptist Church Rd","Underhill Ave","Hayes Dr"],"td":0},"YT33":{"band":"South","side":"east","tac":"1.9 mi east of the Taconic","near":"1.5 mi from Kitchawan center","roads":["Rt 118"],"P":["Hanover East Park","Hilltop Hanover Farm"],"S":["St. Patrick & St. George School"],"R":[],"C":[],"F":[],"streets":["Hanover St","Birdsall Dr","Croton Heights Rd","Sunset St"],"td":1.9},"YT01":{"band":"North","side":"west","tac":"1.6 mi west of the Taconic","near":"0.8 mi from Mohegan Lake center","roads":["Rt 6"],"P":["Blackberry Woods","Kensington Woods"],"S":["George Washington Elementary School"],"R":[],"C":["Mohegan Volunteer Fire Assn."],"F":[],"streets":["Strawberry Rd","Mill St","Marcy St","Eleanor Dr","Cross Rd"],"td":-1.6},"YT28":{"band":"North","side":"west","tac":"1.4 mi west of the Taconic","near":"In Mohegan Lake","roads":[],"P":[],"S":[],"R":[],"C":[],"F":["Taco Bell (Mohegan Lake)"],"streets":["Lexington Ave","Old Farm Ln","Panorama Dr","Sharon Lynn Blvd","Leisure Way"],"nearest":"Rock Hill Park (0.3 mi)","td":-1.4},"YT03":{"band":"South","side":"through","tac":"Taconic runs through it","near":"1.7 mi from Kitchawan center","roads":["Rt 134"],"P":["New Croton Unit (county parkland)","Stayback Hill Unit (county parkland)","Teatown Lake Reservation","Kitchawan Preserve"],"S":["Yeshiva Khilath Yakov School"],"R":[],"C":[],"F":[],"streets":["Croton Lake Rd","Pinesbridge Rd","Spring Valley Rd","Illington Rd"],"td":0},"YT07":{"band":"Central","side":"east","tac":"1.6 mi east of the Taconic","near":"In Yorktown Heights","roads":["Rt 118"],"P":[],"S":[],"R":[],"C":["Yorktown Town Hall"],"F":[],"streets":["Front St","Summit St","Hanover St","Central St","Paine St"],"nearest":"St. Patrick & St. George School (0.4 mi)","td":1.6},"YT34":{"band":"Central","side":"east","tac":"1.8 mi east of the Taconic","near":"In Yorktown Heights","roads":[],"P":["Junior Lake Park and Pool"],"S":["BOCES Tech Center campus"],"R":[],"C":[],"F":[],"streets":["Hanover St","Halyan Rd","Highbrook St","Boces Dr","Shadow Ln"],"td":1.8},"YT17":{"band":"South","side":"east","tac":"1.2 mi east of the Taconic","near":"1.3 mi from Yorktown Heights center","roads":["Rt 118"],"P":[],"S":[],"R":[],"C":[],"F":[],"streets":["Croton Heights Rd","Mckeel St","Chestnut Ct","Rutledge Dr","Spring Dr"],"nearest":"Turkey Mountain (east unit) (0.4 mi)","td":1.2},"YT38":{"band":"North","side":"west","tac":"0.8 mi west of the Taconic","near":"1.1 mi from Mohegan Lake center","roads":["Rt 6"],"P":["Granite Knolls Park West"],"S":[],"R":[],"C":[],"F":[],"streets":["Mohegan Ave","Stoney St","Sagamore Ave","Amazon Rd","Lake Shore Rd"],"td":-0.8},"YT13":{"band":"North","side":"west","tac":"0.7 mi west of the Taconic","near":"0.7 mi from Shrub Oak center","roads":[],"P":["Ivy Knolls Park"],"S":["Lakeland High School"],"R":[],"C":[],"F":[],"streets":["E Main St","Stoney St","Ivy Rd","Sunny Ridge Rd","Spruce St"],"td":-0.7},"YT22":{"band":"North","side":"through","tac":"Taconic runs through it","near":"1.1 mi from Shrub Oak center","roads":["Rt 6","Rt 132"],"P":["Granite Knolls Park"],"S":[],"R":[],"C":[],"F":["The Corner Creamery"],"streets":["E Main St","James St","Frost Rd","Buckhorn St","Glen Rd"],"td":0},"YT40":{"band":"North","side":"through","tac":"Taconic runs through it","near":"0.6 mi from Shrub Oak center","roads":[],"P":[],"S":["Lakeland Copper Beech Middle School","Benjamin Franklin Elementary School"],"R":[],"C":[],"F":[],"streets":["Old Yorktown Rd","Westminster Rd","Overlook Ave","Kamhi Dr","Parkway Pl"],"td":0},"YT21":{"band":"North","side":"through","tac":"Taconic runs through it","near":"1.5 mi from Shrub Oak center","roads":[],"P":["Woodlands Legacy Fields Park"],"S":["Crompond Elementary School"],"R":[],"C":[],"F":[],"streets":["Old Yorktown Rd","Woodlands Dr","Barberry Rd","Manor St","Saddle Ridge Dr"],"td":0},"YT23":{"band":"North","side":"east","tac":"1.0 mi east of the Taconic","near":"1.1 mi from Jefferson Valley center","roads":[],"P":[],"S":[],"R":[],"C":[],"F":[],"streets":["Hill Blvd","Lee Blvd","Village Rd","Independence Ct","Jefferson Oval"],"nearest":"Jefferson Valley Mall (0.5 mi)","td":1.0},"YT41":{"band":"North","side":"west","tac":"1.5 mi west of the Taconic","near":"In Mohegan Lake","roads":[],"P":["Rock Hill Park"],"S":[],"R":[],"C":[],"F":[],"streets":["Horton Rd","Parmly Rd","Crawford Rd","Lawrence Rd","Decatur Rd"],"td":-1.5},"YT11":{"band":"North","side":"through","tac":"Taconic runs through it","near":"2.1 mi from Shrub Oak center","roads":["Rt 35/202"],"P":["Woodlands Legacy Fields Park"],"S":["Mercy College Yorktown campus","Fox Meadow High School"],"R":[],"C":[],"F":[],"streets":["Strang Blvd","Fox Meadow Rd","Old Yorktown Rd","Larkspur St","Lester Rd"],"td":0},"YT24":{"band":"North","side":"east","tac":"0.9 mi east of the Taconic","near":"1.6 mi from Shrub Oak center","roads":[],"P":["London Woods Field"],"S":[],"R":[],"C":[],"F":[],"streets":["London Rd","Ferncrest Dr","S Deerfield Ave","Old Yorktown Rd","Cedar Rd"],"td":0.9},"YT12":{"band":"North","side":"east","tac":"1.4 mi east of the Taconic","near":"2.4 mi from Yorktown Heights center","roads":[],"P":[],"S":[],"R":[],"C":[],"F":[],"streets":["Quinlan St","Mead St","Ogden Dr","Breen Ln","Louella Rd"],"nearest":"Chelsea Park (0.5 mi)","td":1.4},"YT32":{"band":"South","side":"east","tac":"2.3 mi east of the Taconic","near":"1.2 mi from Kitchawan center","roads":[],"P":[],"S":[],"R":[],"C":[],"F":[],"streets":["Crow Hill Rd","Colonial Hill Rd","Seven Bridges Rd","Lake Rd","Spring Pond Rd"],"nearest":"Kitchawan Preserve (1.2 mi)","td":2.3}},"pois":[{"n":"Shrub Oak","c":"H","x":4011,"y":12733},{"n":"Kitchawan","c":"H","x":8403,"y":1914},{"n":"Granite Springs","c":"H","x":11264,"y":11037},{"n":"Jefferson Village","c":"X","x":7113,"y":12636},{"n":"Amawalk","c":"H","x":10376,"y":8843},{"n":"Yorktown Heights","c":"H","x":9237,"y":7093},{"n":"Manhattan Park","c":"X","x":9264,"y":3815},{"n":"Mohegan Lake","c":"H","x":1098,"y":11843},{"n":"Jefferson Valley","c":"H","x":7931,"y":13815},{"n":"Croton Heights","c":"X","x":8653,"y":4676},{"n":"Yeshiva Khilath Yakov School","c":"S","x":5598,"y":2148},{"n":"French Hill Elementary School","c":"S","x":8153,"y":7787},{"n":"Shrub Oak Post Office","c":"C","x":3333,"y":12732},{"n":"Jefferson Valley Fire Station","c":"C","x":6667,"y":12472},{"n":"Yorktown Golf and Baseball","c":"P","x":1963,"y":9377},{"n":"Macy's","c":"R","x":6073,"y":12917},{"n":"Libri","c":"F","x":8803,"y":7533},{"n":"Trailside Cafe","c":"F","x":8946,"y":7065},{"n":"Acme (Yorktown Heights)","c":"R","x":9061,"y":7759},{"n":"Little Cabin Sandwiches","c":"F","x":2119,"y":9052},{"n":"Yorktown Stage","c":"C","x":8892,"y":7607},{"n":"Our Place Kitchen & Bar","c":"F","x":8839,"y":6987},{"n":"Maria's Pizza","c":"F","x":8764,"y":7763},{"n":"Oscar's","c":"F","x":8687,"y":7748},{"n":"Yorktown Pizza and Pasta","c":"F","x":8609,"y":7680},{"n":"Jewel of Himalaya","c":"F","x":8995,"y":7798},{"n":"Salsa Fresca","c":"F","x":8975,"y":7801},{"n":"Acme (Shrub Oak)","c":"R","x":3328,"y":12769},{"n":"POW Burger","c":"F","x":9041,"y":7778},{"n":"Slice","c":"F","x":4662,"y":9177},{"n":"Starbucks (Rt 202)","c":"F","x":4642,"y":9176},{"n":"Nathan's","c":"F","x":8875,"y":7666},{"n":"Taco Bell (Yorktown Heights)","c":"F","x":8709,"y":7340},{"n":"Hirame Sushi","c":"F","x":8706,"y":7354},{"n":"Nonna's Pizzeria","c":"F","x":8707,"y":7350},{"n":"Domino's","c":"F","x":8864,"y":7277},{"n":"Primal Bowls","c":"F","x":8860,"y":7295},{"n":"Rita's Italian Ice","c":"F","x":8859,"y":7304},{"n":"Goldfish Swim School","c":"C","x":9043,"y":7793},{"n":"Dunkin' (Rt 6)","c":"F","x":2323,"y":8965},{"n":"Jefferson Valley Post Office","c":"C","x":6089,"y":13174},{"n":"TJ Maxx","c":"R","x":8736,"y":7244},{"n":"Don Pablo Mexican Cuisine","c":"F","x":8737,"y":7211},{"n":"Bangkok Spice","c":"F","x":3883,"y":12935},{"n":"The Corner Creamery","c":"F","x":3951,"y":12931},{"n":"Sanctuary Golf Course","c":"P","x":7666,"y":4123},{"n":"Pappous Greek Kitchen","c":"F","x":8758,"y":7595},{"n":"Yorktown Coach Diner","c":"F","x":8845,"y":7392},{"n":"Burger King","c":"F","x":8627,"y":7417},{"n":"Uncle Giuseppe's","c":"R","x":8827,"y":7158},{"n":"Donald J. Trump State Park (French Hill)","c":"P","x":6639,"y":6119},{"n":"Mercy College Yorktown campus","c":"S","x":4959,"y":9550},{"n":"Turkey Mountain (west unit)","c":"P","x":6679,"y":4914},{"n":"Turkey Mountain (east unit)","c":"P","x":8223,"y":5842},{"n":"New Croton Unit (county parkland)","c":"P","x":4168,"y":3188},{"n":"Sylvan Glen Park Preserve","c":"P","x":2616,"y":9843},{"n":"Granite Knolls Park West","c":"P","x":3173,"y":10442},{"n":"Granite Knolls Park","c":"P","x":4031,"y":11039},{"n":"Jefferson Valley Mall","c":"R","x":6231,"y":12858},{"n":"Jack DeVito Veterans Memorial Park","c":"P","x":9049,"y":7640},{"n":"Junior Lake Park and Pool","c":"P","x":9406,"y":7558},{"n":"McDonald's (Rt 6)","c":"F","x":3452,"y":9010},{"n":"Hunterbrook Field","c":"P","x":3422,"y":8526},{"n":"Fox Den Park","c":"P","x":2437,"y":8225},{"n":"Downing Park","c":"P","x":6161,"y":9303},{"n":"Woodlands Legacy Fields Park","c":"P","x":5085,"y":10755},{"n":"Hudson Valley Steakhouse","c":"F","x":3992,"y":9213},{"n":"Yorktown Town Hall","c":"C","x":8784,"y":6871},{"n":"Yorktown Heights Engine Co. 1","c":"C","x":9028,"y":7418},{"n":"Starbucks (Yorktown Heights)","c":"F","x":8960,"y":7487},{"n":"Trader Joe's","c":"R","x":4577,"y":9168},{"n":"FDR State Park Pool","c":"P","x":6416,"y":7791},{"n":"Popeyes","c":"F","x":3826,"y":9082},{"n":"Triangle Shopping Center","c":"R","x":8958,"y":7759},{"n":"Underhill Plaza","c":"R","x":8876,"y":7301},{"n":"Yorktown Green Shopping Center","c":"R","x":8743,"y":7289},{"n":"Yorktown Heights Post Office","c":"C","x":9253,"y":7869},{"n":"BOCES Tech Center campus","c":"S","x":10294,"y":7722},{"n":"Brookside Elementary School","c":"S","x":8773,"y":8703},{"n":"Crompond Elementary School","c":"S","x":5494,"y":10484},{"n":"Mohansic Golf Course","c":"P","x":5604,"y":6896},{"n":"Lakeland High School","c":"S","x":3273,"y":12448},{"n":"Lakeland Copper Beech Middle School","c":"S","x":5276,"y":12151},{"n":"Benjamin Franklin Elementary School","c":"S","x":4735,"y":12112},{"n":"John C. Hart Memorial Library","c":"C","x":4058,"y":13012},{"n":"Yorktown Police Department","c":"C","x":7515,"y":8179},{"n":"Hunterbrook Preserve","c":"P","x":2744,"y":7019},{"n":"Rock Hill Park","c":"P","x":1842,"y":11535},{"n":"Blackberry Woods","c":"P","x":2479,"y":13051},{"n":"Chelsea Park","c":"P","x":7944,"y":10756},{"n":"Deer Hollow Park","c":"P","x":3885,"y":9850},{"n":"Hanover East Park","c":"P","x":10188,"y":6004},{"n":"Harrison Apar Field of Dreams","c":"P","x":8527,"y":9222},{"n":"Ivy Knolls Park","c":"P","x":3058,"y":12152},{"n":"Kensington Woods","c":"P","x":1193,"y":12973},{"n":"London Woods Field","c":"P","x":5832,"y":11217},{"n":"Railroad Park","c":"P","x":8995,"y":7162},{"n":"York Hill Park","c":"P","x":7697,"y":8457},{"n":"Mohegan Volunteer Fire Assn.","c":"C","x":1143,"y":11911},{"n":"Danner Family Preserve","c":"P","x":6652,"y":13974},{"n":"Taco Bell (Mohegan Lake)","c":"F","x":1615,"y":12204},{"n":"The Links at Valley Fields","c":"P","x":5623,"y":13129},{"n":"Chipotle","c":"F","x":4733,"y":9209},{"n":"Hemlock Brook Preserve","c":"P","x":5064,"y":5496},{"n":"St. Patrick & St. George School","c":"S","x":9766,"y":6748},{"n":"Sparkle Lake Park","c":"P","x":8811,"y":10679},{"n":"Mildred E. Strang Middle School","c":"S","x":6907,"y":9108},{"n":"Yorktown High School","c":"S","x":6760,"y":9202},{"n":"Mohansic Elementary School","c":"S","x":6637,"y":9736},{"n":"Fox Meadow High School","c":"S","x":5881,"y":9590},{"n":"Thomas Jefferson Elementary School","c":"S","x":8108,"y":13146},{"n":"George Washington Elementary School","c":"S","x":1195,"y":12472},{"n":"Franklin D. Roosevelt State Park","c":"P","x":6419,"y":8100},{"n":"Stayback Hill Unit (county parkland)","c":"P","x":6917,"y":2710},{"n":"Teatown Lake Reservation","c":"P","x":3367,"y":1200},{"n":"Kitchawan Preserve","c":"P","x":8486,"y":2449},{"n":"Hilltop Hanover Farm","c":"P","x":9998,"y":5207}]};
+const RACES = {
+  CD17: { label: "House, NY-17", short: "House", d: "Conley", r: "Lawler" },
+  GOV:  { label: "Governor", short: "Governor", d: "Hochul", r: "Blakeman" },
+  AG:   { label: "Attorney General", short: "AG", d: "James", r: "Komatireddy" },
+  CMP:  { label: "Comptroller", short: "Comptroller", d: "DiNapoli", r: "Hernandez" },
+  SD40: { label: "State Senate, SD-40", short: "State Senate", d: "Harckham", r: "Esposito" }
+};
+const SUP = { label: "Supervisor", short: "Supervisor", d: "Mirchandani", r: "Lachterman" };
+const NS = "http://www.w3.org/2000/svg";
+const state = { view: "split", race: "CD17", sel: null, hover: null, q: "", sort: { key: "gap", dir: -1 } };
+const IDS = Object.keys(DATA.res).sort();
+const CAT = { P: "Parks", S: "Schools", R: "Shopping", C: "Town services", F: "Food" };
+const GLYPH = { P: "●", S: "■", R: "◆", C: "▲" };
+const MAJOR = { "Jefferson Valley Mall": "Jefferson Valley Mall", "Franklin D. Roosevelt State Park": "FDR State Park", "Yorktown High School": "Yorktown HS",
+  "Lakeland High School": "Lakeland HS", "Trader Joe's": "Trader Joe's", "Mohansic Golf Course": "Mohansic Golf", "Turkey Mountain (west unit)": "Turkey Mtn",
+  "Sylvan Glen Park Preserve": "Sylvan Glen", "Hilltop Hanover Farm": "Hilltop Hanover Farm", "Crompond Elementary School": "Crompond Elem." };
+const HAMLETS = ["Mohegan Lake", "Shrub Oak", "Jefferson Valley", "Yorktown Heights", "Kitchawan"];
+
+/* ---------- numbers ---------- */
+function two(v) { return v[0] + v[1]; }
+function margin(v) { const t = two(v); return t ? (v[0] - v[1]) / t * 100 : 0; }
+function rshare(v) { const t = two(v); return t ? v[1] / t : 0; }
+function townTotals(key) { const t = [0, 0, 0]; IDS.forEach(id => DATA.res[id][key].forEach((x, i) => t[i] += x)); return t; }
+function stats(rec) {
+  const s = rec.SUP, c = rec[state.race];
+  const ms = margin(s), mc = margin(c);
+  const lean = mc - ms;
+  const net = (rshare(s) - rshare(c)) * (two(s) + two(c)) / 2;
+  const ws = s[1] > s[0] ? "R" : s[0] > s[1] ? "D" : "T";
+  const wc = c[1] > c[0] ? "R" : c[0] > c[1] ? "D" : "T";
+  const cat = (ws === "T" || wc === "T") ? "T" : ws + wc;
+  return { ms, mc, lean, net, cat };
+}
+function fmtM(m) { if (Math.abs(m) < 0.05) return "Even"; return (m > 0 ? "D+" : "R+") + Math.abs(m).toFixed(1); }
+function fmtN(n) { return n.toLocaleString("en-US"); }
+function edName(id) { return "Yorktown " + id.slice(2); }
+function esc(s) { return String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])); }
+function tacShort(g) { return g.side === "through" ? "On it" : (g.td > 0 ? "E " : "W ") + Math.abs(g.td).toFixed(1) + " mi"; }
+
+/* ---------- search index ---------- */
+const INDEX = {};
+IDS.forEach(id => {
+  const g = DATA.guide[id];
+  INDEX[id] = [String(+id.slice(2)), g.near, g.tac, ...g.roads, ...g.streets, ...g.P, ...g.S, ...g.R, ...g.C, ...g.F].join(" | ").toLowerCase();
+});
+function matches(id) {
+  const q = state.q.trim().toLowerCase();
+  if (!q) return true;
+  if (/^\d{1,2}$/.test(q)) return +id.slice(2) === +q;
+  return INDEX[id].includes(q);
+}
+
+/* ---------- colors ---------- */
+let C = {};
+function readColors() {
+  const cs = getComputedStyle(document.documentElement);
+  ["dem","rep","zero","amber","teal","ink","muted","surface"].forEach(k => C[k] = cs.getPropertyValue("--" + k).trim());
+}
+function hex(c) { c = c.replace("#", ""); return [0, 2, 4].map(i => parseInt(c.slice(i, i + 2), 16)); }
+function mix(a, b, t) { const A = hex(a), B = hex(b); return "rgb(" + A.map((x, i) => Math.round(x + (B[i] - x) * t)).join(",") + ")"; }
+function diverge(v, max, neg, pos) { const t = Math.max(-1, Math.min(1, v / max)); const e = Math.pow(Math.abs(t), 0.85); return t >= 0 ? mix(C.zero, pos, e) : mix(C.zero, neg, e); }
+function catColor(cat) { return { RD: C.amber, DR: C.teal, RR: mix(C.zero, C.rep, .42), DD: mix(C.zero, C.dem, .42), T: C.zero }[cat]; }
+function fillFor(id) {
+  const st = stats(DATA.res[id]);
+  if (state.view === "split") return catColor(st.cat);
+  if (state.view === "gap") return diverge(st.lean, 12, C.teal, C.amber);
+  if (state.view === "sup") return diverge(st.ms, 40, C.rep, C.dem);
+  return diverge(st.mc, 40, C.rep, C.dem);
+}
+
+/* ---------- map ---------- */
+const svg = document.getElementById("map");
+const [vx, vy, vw, vh] = DATA.vb;
+svg.setAttribute("viewBox", DATA.vb.join(" "));
+const P = (x, y) => [x * DATA.K, DATA.Ymax - y];
+const inView = ([px, py]) => px > vx + 60 && px < vx + vw - 60 && py > vy + 60 && py < vy + vh - 60;
+function pathD(enc) { return enc.split(";").map(r => { const a = r.split(","); return "M" + a[0] + "," + a[1] + (a.length > 2 ? "l" + a.slice(2).join(",") : "") + "z"; }).join(""); }
+function lineD(enc) { return enc.split(";").map(r => { const a = r.split(","); return "M" + a[0] + "," + a[1] + "l" + a.slice(2).join(","); }).join(""); }
+function el(tag, attrs, parent) { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); if (parent) parent.appendChild(e); return e; }
+
+const defs = el("defs", {}, svg);
+const pat = el("pattern", { id: "waterfill", patternUnits: "userSpaceOnUse", width: 90, height: 90 }, defs);
+el("rect", { width: 90, height: 90, fill: "var(--water)" }, pat);
+el("path", { d: "M0,45 H90", stroke: "var(--water-line)", "stroke-width": 8, opacity: .45 }, pat);
+el("rect", { x: vx, y: vy, width: vw, height: vh, fill: "transparent" }, svg).addEventListener("click", () => select(null));
+const geo = el("g", { transform: `matrix(${DATA.K} 0 0 -1 0 ${DATA.Ymax})` }, svg);
+const gEds = el("g", {}, geo), gWater = el("g", {}, geo), gRoads = el("g", {}, geo);
+const selRing = el("path", { id: "selring", d: "" }, geo);
+const gLab = el("g", {}, svg);
+const gMarks = el("g", { id: "gMarks" }, svg);
+const gTop = el("g", {}, svg);
+const edPath = {};
+
+IDS.forEach(id => {
+  const p = el("path", { d: pathD(DATA.eds[id].g), class: "ed", tabindex: 0, role: "button", "aria-label": edName(id) }, gEds);
+  p.addEventListener("click", e => { e.stopPropagation(); select(state.sel === id ? null : id); });
+  p.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); select(state.sel === id ? null : id); } });
+  p.addEventListener("pointerenter", e => { if (e.pointerType === "mouse") { state.hover = id; renderReadout(); } });
+  p.addEventListener("pointerleave", e => { if (e.pointerType === "mouse") { state.hover = null; renderReadout(); } });
+  edPath[id] = p;
+});
+DATA.lakes.forEach(l => el("path", { d: pathD(l.g), class: "water", "fill-rule": "evenodd" }, gWater));
+DATA.roads.forEach(r => el("path", { d: lineD(r.g), class: "road" + (r.n.startsWith("Taconic") ? " tsp" : "") }, gRoads));
+
+function anchorFor(px) { return px > vx + vw * .8 ? "end" : px < vx + vw * .18 ? "start" : "middle"; }
+function txt(parent, x, y, cls, s, extra) { const t = el("text", Object.assign({ x, y, class: "lab " + cls, "text-anchor": "middle", "dominant-baseline": "central" }, extra || {}), parent); t.textContent = s; return t; }
+DATA.lakes.filter(l => l.n && l.lp).forEach(l => { const [px, py] = P(...l.lp); if (inView([px, py])) txt(gLab, px, py, "lk", l.n, { "text-anchor": anchorFor(px) }); });
+DATA.roads.filter(r => r.label && r.lp).forEach(r => { const [px, py] = P(...r.lp); txt(gLab, px, py, "rd" + (r.label === "Taconic" ? " tsp" : ""), r.label === "Taconic" ? "Taconic" : "Rt " + (r.label === "35" ? "35/202" : r.label)); });
+IDS.forEach(id => { const [px, py] = P(...DATA.eds[id].lp); txt(gLab, px, py, "ed-n", String(+id.slice(2))); });
+// landmarks (toggle) and major landmark names
+DATA.pois.filter(p => GLYPH[p.c]).forEach(p => {
+  const [px, py] = P(p.x, p.y); if (!inView([px, py])) return;
+  const m = txt(gMarks, px, py, "mk", GLYPH[p.c]);
+  const t = el("title", {}, m); t.textContent = p.n;
+  if (MAJOR[p.n]) txt(gMarks, px, py, "lm", MAJOR[p.n], { "text-anchor": px > vx + vw * .7 ? "end" : "start", dx: px > vx + vw * .7 ? "-0.8em" : "0.8em" });
+});
+// hamlet names on top
+DATA.pois.filter(p => p.c === "H" && HAMLETS.includes(p.n)).forEach(p => { const [px, py] = P(p.x, p.y); if (inView([px, py])) txt(gTop, px, py, "hm", p.n, { "text-anchor": anchorFor(px) }); });
+svg.insertBefore(svg.querySelector("rect[fill='transparent']"), geo);
+
+function scaleLabels() {
+  const r = svg.getBoundingClientRect();
+  if (!r.width) return;
+  svg.style.setProperty("--u", Math.max(vw / r.width, vh / r.height).toFixed(2));
+}
+new ResizeObserver(scaleLabels).observe(svg);
+
+function paint() {
+  const searching = !!state.q.trim();
+  svg.classList.toggle("searching", searching);
+  IDS.forEach(id => { edPath[id].setAttribute("fill", fillFor(id)); edPath[id].classList.toggle("hit", searching && matches(id)); });
+  selRing.setAttribute("d", state.sel ? pathD(DATA.eds[state.sel].g) : "");
+}
+
+/* ---------- your location ---------- */
+const RINGS = {};
+IDS.forEach(id => { const a = DATA.eds[id].g.split(";")[0].split(",").map(Number); const pts = [[a[0], a[1]]]; for (let i = 2; i < a.length; i += 2) pts.push([pts[pts.length - 1][0] + a[i], pts[pts.length - 1][1] + a[i + 1]]); RINGS[id] = pts; });
+function pipXY(x, y, r) { let c = false; for (let i = 0, j = r.length - 1; i < r.length; j = i++) { const [xi, yi] = r[i], [xj, yj] = r[j]; if (((yi > y) !== (yj > y)) && (x < (xj - xi) * (y - yi) / (yj - yi) + xi)) c = !c; } return c; }
+function edAt(X, Y) { return IDS.find(id => pipXY(X, Y, RINGS[id])) || null; }
+const meAcc = el("circle", { class: "me-acc", r: 0, cx: -1e6, cy: -1e6 }, gTop);
+const mePulse = el("circle", { class: "me-pulse", r: 0, cx: -1e6, cy: -1e6 }, gTop);
+const meDot = el("circle", { class: "me-dot", r: 0, cx: -1e6, cy: -1e6 }, gTop);
+let me = null, watchId = null, firstFix = true;
+function placeMe() {
+  if (!me) { [meAcc, mePulse, meDot].forEach(c => c.setAttribute("r", 0)); return; }
+  const [px, py] = P(me.X, me.Y), u = parseFloat(svg.style.getPropertyValue("--u")) || 14;
+  [meAcc, mePulse, meDot].forEach(c => { c.setAttribute("cx", px); c.setAttribute("cy", py); });
+  meAcc.setAttribute("r", Math.min(me.acc / 1.1132, 4000));
+  meDot.setAttribute("r", 6.5 * u); mePulse.setAttribute("r", 6.5 * u);
+}
+function locMsg(s, err) { const m = document.getElementById("locmsg"); m.textContent = s; m.classList.toggle("err", !!err); }
+function stopLocating() {
+  if (watchId !== null) navigator.geolocation.clearWatch(watchId);
+  watchId = null; me = null; firstFix = true; placeMe(); renderReadout();
+  document.getElementById("locate").setAttribute("aria-pressed", "false");
+  document.getElementById("loctext").textContent = "Show my location";
+}
+function onPos(p) {
+  const X = (p.coords.longitude + 73.87) * 1e5, Y = (p.coords.latitude - 41.2) * 1e5;
+  me = { X, Y, acc: p.coords.accuracy, ed: edAt(X, Y) };
+  placeMe();
+  if (me.ed) {
+    const g = DATA.guide[me.ed];
+    locMsg(`You're in district ${+me.ed.slice(2)} · ${g.tac.startsWith("Taconic") ? "the " + g.tac : g.tac.charAt(0).toLowerCase() + g.tac.slice(1)}`);
+    if (firstFix) { select(me.ed); }
+  } else {
+    const [px, py] = P(X, Y);
+    locMsg(inView([px, py]) ? "You're just outside Yorktown." : "You're outside Yorktown, so you're off this map.");
+  }
+  firstFix = false; renderReadout();
+}
+function onErr(e) {
+  stopLocating();
+  locMsg(e.code === 1 ? "Location is blocked. Allow location for this page in your browser or phone settings, then try again." : "Couldn't get your location. Try again outdoors or with Wi-Fi on.", true);
+}
+document.getElementById("locate").addEventListener("click", () => {
+  if (watchId !== null) { stopLocating(); locMsg(""); return; }
+  if (!("geolocation" in navigator)) { locMsg("This browser can't share your location.", true); return; }
+  locMsg("Finding you…");
+  document.getElementById("locate").setAttribute("aria-pressed", "true");
+  document.getElementById("loctext").textContent = "Stop";
+  watchId = navigator.geolocation.watchPosition(onPos, onErr, { enableHighAccuracy: true, maximumAge: 10000, timeout: 30000 });
+});
+new ResizeObserver(placeMe).observe(svg);
+
+/* ---------- readout ---------- */
+function raceRow(meta, v) {
+  const t = two(v), dp = t ? v[0] / t * 100 : 50, m = margin(v);
+  return `<div class="race">
+    <div class="nm">${meta.short}</div>
+    <div class="bar" role="img" aria-label="${meta.d} ${dp.toFixed(1)} percent, ${meta.r} ${(100 - dp).toFixed(1)} percent"><span style="width:${dp}%;background:${C.dem}"></span><span style="width:${100 - dp}%;background:${C.rep}"></span></div>
+    <div class="mg" style="color:${m > 0 ? C.dem : m < 0 ? C.rep : C.ink}">${fmtM(m)}</div>
+    <div class="race-votes">${meta.d} ${fmtN(v[0])} · ${meta.r} ${fmtN(v[1])}</div>
+  </div>`;
+}
+function catLabel(cat, short) { return { RD: `R for supervisor, D for ${short}`, DR: `D for supervisor, R for ${short}`, RR: "Republican in both", DD: "Democratic in both", T: "Tied in one race" }[cat]; }
+function gapSentence(st) {
+  const L = Math.abs(st.lean), meta = RACES[state.race];
+  if (L < 0.05) return `Supervisor and ${meta.short} races voted the same.`;
+  const who = st.lean > 0 ? `<b>Lachterman</b> ran <b>${L.toFixed(1)} pts</b> ahead of ${meta.r}` : `<b>Mirchandani</b> ran <b>${L.toFixed(1)} pts</b> ahead of ${meta.d}`;
+  return `${who} · ≈ <b>${fmtN(Math.round(Math.abs(st.net)))}</b> net crossover voters`;
+}
+function hereList(g, limit) {
+  const parts = [];
+  ["P", "S", "R", "C"].forEach(c => { if (g[c].length) parts.push(g[c].slice(0, limit).join(", ")); });
+  return parts.join(" · ");
+}
+function whereBlock(id) {
+  if (!id) return `<div class="where-box"><p class="where">The Taconic runs north–south through the middle of town. Pick a district to see where it is.</p></div>`;
+  const g = DATA.guide[id];
+  const here = hereList(g, 3);
+  return `<div class="where-box">
+    <p class="where"><b>Where</b> ${esc(g.band)} Yorktown · ${esc(g.tac)} · ${esc(g.near)}</p>
+    <p class="where clip"><b>Streets</b> ${esc([...g.roads, ...g.streets].join(", "))}</p>
+    <p class="where wide"><b>Here</b> ${here ? esc(here) : `<span class="mute">No mapped landmarks; nearest is ${esc(g.nearest || "")}</span>`}</p>
+    ${g.F.length ? `<p class="where wide clip"><b>Food</b> ${esc(g.F.join(", "))}</p>` : ""}
+  </div>`;
+}
+function renderReadout() {
+  const id = state.hover || state.sel, meta = RACES[state.race];
+  let rec, title, sub;
+  if (id) { rec = DATA.res[id]; title = edName(id); sub = `${fmtN(rec.b)} ballots cast` + (me && me.ed === id ? ` · <span class="youhere">You're here</span>` : ""); }
+  else { rec = { SUP: townTotals("SUP") }; rec[state.race] = townTotals(state.race); title = "All of Yorktown"; sub = `42 election districts · ${fmtN(IDS.reduce((s, k) => s + DATA.res[k].b, 0))} ballots`; }
+  const st = stats(rec);
+  document.getElementById("readout").innerHTML = `
+    <div class="ro-head"><div><div class="ro-title">${title}</div><div class="ro-sub num">${sub}</div></div>
+    <span class="pill"><i style="background:${catColor(st.cat)}"></i>${catLabel(st.cat, meta.short)}</span></div>
+    ${whereBlock(id)}
+    ${raceRow(SUP, rec.SUP)}${raceRow(meta, rec[state.race])}
+    <div class="gapline">${gapSentence(st)}</div>`;
+}
+
+/* ---------- legend ---------- */
+function rampCSS(neg, pos) { return `linear-gradient(90deg, ${neg}, ${C.zero} 50%, ${pos})`; }
+function renderLegend() {
+  const meta = RACES[state.race], box = document.getElementById("legend");
+  if (state.view === "split") {
+    const counts = {}; IDS.forEach(id => { const c = stats(DATA.res[id]).cat; counts[c] = (counts[c] || 0) + 1; });
+    box.innerHTML = `<p class="label-sm">Who won each race</p><div class="sw">` + ["RD", "DR", "RR", "DD", "T"].map(c => `<div class="item"><i style="background:${catColor(c)}"></i><span>${catLabel(c, meta.short)}</span><span class="ct">${counts[c] || 0}</span></div>`).join("") + `</div>`;
+  } else if (state.view === "gap") {
+    box.innerHTML = `<p class="label-sm">Supervisor race vs ${meta.short}, same district</p>
+      <div class="ramp" style="background:${rampCSS(C.teal, C.amber)}"></div>
+      <div class="ramp-ticks"><span>12+ pts</span><span>6</span><span>0</span><span>6</span><span>12+ pts</span></div>
+      <div class="ramp-caps"><span>Mirchandani ran ahead of ${meta.d}</span><span style="text-align:right">Lachterman ran ahead of ${meta.r}</span></div>`;
+  } else {
+    const who = state.view === "sup" ? "Supervisor" : meta.label;
+    box.innerHTML = `<p class="label-sm">${who} margin</p>
+      <div class="ramp" style="background:${rampCSS(C.rep, C.dem)}"></div>
+      <div class="ramp-ticks"><span>R+40</span><span>R+20</span><span>Even</span><span>D+20</span><span>D+40</span></div>`;
+  }
+}
+
+/* ---------- findings ---------- */
+function chips(ids) {
+  if (!ids.length) return `<div class="chips"><span class="chip none">None</span></div>`;
+  return `<div class="chips">` + ids.map(id => `<button type="button" class="chip" data-ed="${id}" title="${esc(DATA.guide[id].tac + " · " + DATA.guide[id].near)}">${+id.slice(2)}</button>`).join("") + `</div>`;
+}
+function renderFindings() {
+  const meta = RACES[state.race];
+  const all = IDS.map(id => ({ id, ...stats(DATA.res[id]) }));
+  const town = stats({ SUP: townTotals("SUP"), [state.race]: townTotals(state.race) });
+  const ahead = all.filter(s => s.lean > 0).length;
+  const rd = all.filter(s => s.cat === "RD").map(s => s.id), dr = all.filter(s => s.cat === "DR").map(s => s.id), tie = all.filter(s => s.cat === "T").map(s => s.id);
+  const top = all.slice().sort((a, b) => b.lean - a.lean).slice(0, 5).map(s => s.id);
+  const winC = town.mc > 0 ? `${meta.d} (D) carried Yorktown by ${town.mc.toFixed(1)}` : town.mc < 0 ? `${meta.r} (R) carried Yorktown by ${(-town.mc).toFixed(1)}` : `the ${meta.short} race was tied in Yorktown`;
+  document.getElementById("findings").innerHTML = `
+    <p class="label-sm">What the ${meta.short} comparison shows</p>
+    <p>Lachterman won by ${(-town.ms).toFixed(1)}; ${winC}. He ran ahead of ${meta.r} in <b>${ahead} of 42</b> districts, worth about <b>${fmtN(Math.round(town.net))}</b> net crossover voters town-wide.</p>
+    <p><b>R for supervisor, D for ${meta.short}</b> (${rd.length})</p>${chips(rd)}
+    <p><b>D for supervisor, R for ${meta.short}</b> (${dr.length})</p>${chips(dr)}
+    ${tie.length ? `<p><b>Tied in one race</b> (${tie.length})</p>${chips(tie)}` : ""}
+    <p><b>Biggest Lachterman overperformance</b></p>${chips(top)}`;
+}
+document.getElementById("findings").addEventListener("click", e => { const b = e.target.closest("[data-ed]"); if (b) select(b.dataset.ed, true); });
+
+/* ---------- district guide ---------- */
+function renderGuide() {
+  const meta = RACES[state.race];
+  const box = document.getElementById("guide");
+  box.innerHTML = IDS.filter(matches).map(id => {
+    const g = DATA.guide[id], st = stats(DATA.res[id]);
+    const lines = [];
+    ["P", "S", "R", "C", "F"].forEach(c => { if (g[c].length) lines.push(`<div class="gl"><b>${CAT[c]}</b> ${esc(g[c].join(", "))}</div>`); });
+    if (!g.P.length && !g.S.length && !g.R.length) lines.push(`<div class="gl dim">No mapped landmarks. Nearest: ${esc(g.nearest || "")}</div>`);
+    return `<div class="gcard${state.sel === id ? " sel" : ""}" data-ed="${id}" role="button" tabindex="0" aria-label="${edName(id)}">
+      <div class="gh"><span class="gnum">${+id.slice(2)}</span><span class="gwhere">${esc(g.band)} · ${esc(g.tac)}</span><span class="pill" title="${esc(catLabel(st.cat, meta.short))}"><i style="background:${catColor(st.cat)}"></i>${fmtM(st.ms)}</span></div>
+      <div class="gl"><b>Near</b> ${esc(g.near)}</div>
+      <div class="gl"><b>Streets</b> ${esc([...g.roads, ...g.streets].join(", "))}</div>
+      ${lines.join("")}
+    </div>`;
+  }).join("") || `<p class="mute">No district matches “${esc(state.q)}”.</p>`;
+}
+const guideBox = document.getElementById("guide");
+guideBox.addEventListener("click", e => { const c = e.target.closest("[data-ed]"); if (c) select(c.dataset.ed, true); });
+guideBox.addEventListener("keydown", e => { const c = e.target.closest("[data-ed]"); if (c && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); select(c.dataset.ed, true); } });
+
+/* ---------- table ---------- */
+const COLS = [
+  { key: "id", label: "District" }, { key: "td", label: "Taconic" }, { key: "b", label: "Ballots" }, { key: "ms", label: "Supervisor" },
+  { key: "mc", label: "House" }, { key: "gap", label: "Gap, pts" }, { key: "net", label: "Net crossover" }, { key: "cat", label: "Pattern" }
+];
+function renderTable() {
+  COLS[4].label = RACES[state.race].short;
+  document.getElementById("thead").innerHTML = COLS.map(c => `<th scope="col"><button type="button" data-k="${c.key}" ${state.sort.key === c.key ? `aria-sort="${state.sort.dir > 0 ? "ascending" : "descending"}"` : ""}>${c.label}${state.sort.key === c.key ? (state.sort.dir > 0 ? " ↑" : " ↓") : ""}</button></th>`).join("");
+  const rows = IDS.filter(matches).map(id => { const s = stats(DATA.res[id]); return { id, td: DATA.guide[id].td, b: DATA.res[id].b, ms: s.ms, mc: s.mc, gap: s.lean, net: s.net, cat: s.cat }; });
+  const { key, dir } = state.sort;
+  rows.sort((a, b) => (typeof a[key] === "string" ? a[key].localeCompare(b[key]) : a[key] - b[key]) * dir);
+  document.getElementById("tbody").innerHTML = rows.map(r => {
+    const w = Math.min(50, Math.abs(r.gap) / 12 * 50);
+    const bar = r.gap >= 0 ? `left:50%;width:${w}%;background:${C.amber}` : `right:50%;width:${w}%;background:${C.teal}`;
+    return `<tr data-ed="${r.id}" tabindex="0" class="${state.sel === r.id ? "sel" : ""}">
+      <td>${+r.id.slice(2)}</td><td>${tacShort(DATA.guide[r.id])}</td><td>${fmtN(r.b)}</td>
+      <td style="color:${r.ms > 0 ? C.dem : C.rep}">${fmtM(r.ms)}</td>
+      <td style="color:${r.mc > 0 ? C.dem : r.mc < 0 ? C.rep : C.ink}">${fmtM(r.mc)}</td>
+      <td><span class="gapcell">${r.gap >= 0 ? "R " : "D "}${Math.abs(r.gap).toFixed(1)}<span class="mini"><span style="${bar}"></span></span></span></td>
+      <td>${fmtN(Math.round(Math.abs(r.net)))}</td>
+      <td><span class="pill"><i style="background:${catColor(r.cat)}"></i>${{ RD: "Split: R local", DR: "Split: D local", RR: "R both", DD: "D both", T: "Tie" }[r.cat]}</span></td>
+    </tr>`;
+  }).join("");
+}
+document.getElementById("thead").addEventListener("click", e => {
+  const b = e.target.closest("button[data-k]"); if (!b) return;
+  const k = b.dataset.k; state.sort = { key: k, dir: state.sort.key === k ? -state.sort.dir : (k === "id" || k === "cat" || k === "td" ? 1 : -1) }; renderTable();
+});
+const tbody = document.getElementById("tbody");
+tbody.addEventListener("click", e => { const tr = e.target.closest("tr[data-ed]"); if (tr) select(tr.dataset.ed, true); });
+tbody.addEventListener("keydown", e => { const tr = e.target.closest("tr[data-ed]"); if (tr && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); select(tr.dataset.ed, true); } });
+
+/* ---------- state ---------- */
+function select(id, reveal) {
+  state.sel = id; paint(); renderReadout(); renderTable(); renderGuide();
+  if (reveal && id) {
+    const r = svg.getBoundingClientRect();
+    if (r.top < 0 || r.bottom > innerHeight) svg.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "center" });
+  }
+}
+function renderHits() {
+  const q = state.q.trim();
+  document.getElementById("hits").textContent = q ? (n => n === 1 ? "1 district" : n + " districts")(IDS.filter(matches).length) : "";
+}
+function renderAll() {
+  document.getElementById("cmpbtn").textContent = RACES[state.race].short;
+  paint(); renderReadout(); renderLegend(); renderFindings(); renderGuide(); renderTable(); renderHits();
+}
+document.getElementById("views").addEventListener("click", e => {
+  const b = e.target.closest("button[data-view]"); if (!b) return;
+  state.view = b.dataset.view;
+  document.querySelectorAll("#views button").forEach(x => x.setAttribute("aria-pressed", x === b ? "true" : "false"));
+  paint(); renderLegend();
+});
+document.getElementById("race").addEventListener("change", e => { state.race = e.target.value; renderAll(); });
+document.getElementById("find").addEventListener("input", e => {
+  state.q = e.target.value;
+  const hits = IDS.filter(matches);
+  if (state.q.trim() && hits.length === 1) state.sel = hits[0];
+  paint(); renderGuide(); renderTable(); renderHits(); renderReadout();
+});
+document.getElementById("showmarks").addEventListener("change", e => { gMarks.toggleAttribute("hidden", !e.target.checked); });
+
+readColors(); renderAll(); scaleLabels();
+const retheme = () => { readColors(); renderAll(); };
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change", retheme);
+new MutationObserver(retheme).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+</script>
+
+</body>
+</html>
+
