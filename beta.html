@@ -49,21 +49,22 @@ button { font-family: inherit; }
 .leaflet-control-attribution { font-size: 10px; background: color-mix(in srgb, var(--surface) 80%, transparent) !important; color: var(--muted); }
 .leaflet-control-attribution a { color: var(--muted); }
 .leaflet-bottom { bottom: var(--card-h, 0px); transition: bottom .2s; }
+.leaflet-bottom.leaflet-right .leaflet-control-zoom { margin-bottom: 26px; }
 .leaflet-top { top: env(safe-area-inset-top, 0px); }
 .leaflet-right { right: env(safe-area-inset-right, 0px); }
 .leaflet-bar a { background: var(--surface); color: var(--ink); border-color: var(--rule); width: 44px !important; height: 44px !important; line-height: 44px !important; font-size: 22px !important; }
 .leaflet-bar { border: 0 !important; box-shadow: var(--shadow) !important; border-radius: 10px !important; overflow: hidden; }
 .edlab { font: 700 15px/1 var(--font-display); color: var(--ink); text-align: center; text-shadow: 0 0 3px var(--surface), 0 0 3px var(--surface), 0 0 6px var(--surface); pointer-events: none; white-space: nowrap; }
 .edlab.me { color: var(--me); font-size: 18px; }
-.medot { width: 22px; height: 22px; position: relative; }
-.medot i { position: absolute; inset: 3px; border-radius: 50%; background: var(--me); border: 3px solid var(--me-ring); box-shadow: 0 1px 6px rgba(0,0,0,.45); }
-.medot b { position: absolute; left: 50%; top: 50%; width: 0; height: 0; margin: -27px 0 0 -9px; border: 9px solid transparent; border-bottom: 16px solid var(--me); border-top: 0; transform-origin: 9px 27px; display: none; }
-.medot.heading b { display: block; }
+.medot svg { display: block; overflow: visible; filter: drop-shadow(0 1px 3px rgba(0,0,0,.5)); }
+.medot circle { fill: var(--me); stroke: var(--me-ring); stroke-width: 3; }
+.medot .hd { fill: var(--me); stroke: var(--me-ring); stroke-width: 1.5; stroke-linejoin: round; display: none; }
+.medot.heading .hd { display: block; }
 
 /* ---------- floating controls ---------- */
 .fab { position: fixed; z-index: 800; display: flex; gap: 8px; align-items: flex-start; }
-.fab.tl { top: calc(env(safe-area-inset-top, 0px) + 10px); left: calc(env(safe-area-inset-left, 0px) + 10px); right: 70px; flex-wrap: wrap; }
-.btn { font: 600 15px var(--font-body); color: var(--ink); background: var(--surface); border: 1px solid var(--rule); border-radius: 10px; padding: 0 14px; min-height: 44px; cursor: pointer; box-shadow: var(--shadow); display: inline-flex; gap: 8px; align-items: center; white-space: nowrap; }
+.fab.tl { top: calc(env(safe-area-inset-top, 0px) + 10px); left: calc(env(safe-area-inset-left, 0px) + 10px); right: calc(env(safe-area-inset-right, 0px) + 10px); flex-wrap: wrap; }
+.btn { font: 600 15px var(--font-body); color: var(--ink); background: var(--surface); border: 1px solid var(--rule); border-radius: 10px; padding: 0 12px; min-height: 44px; cursor: pointer; box-shadow: var(--shadow); display: inline-flex; gap: 8px; align-items: center; white-space: nowrap; }
 .btn .sw { width: 14px; height: 14px; border-radius: 3px; display: inline-block; }
 .layers { background: var(--surface); border: 1px solid var(--rule); border-radius: 12px; box-shadow: var(--shadow); padding: 12px; display: grid; gap: 12px; width: min(340px, calc(100vw - 20px)); }
 .layers[hidden] { display: none; }
@@ -197,7 +198,7 @@ td .pill { font-size: 12.5px; padding: 3px 9px; }
 <div class="fab tl">
   <button type="button" class="btn" id="layersbtn" aria-expanded="false" aria-controls="layers"></button>
   <button type="button" class="btn" id="tripbtn">Trip</button>
-  <button type="button" class="btn" id="detailsbtn">Details</button>
+  <button type="button" class="btn" id="detailsbtn">Info</button>
   <div class="layers" id="layers" hidden>
     <div>
       <p class="label-sm" id="viewlab">Color districts by</p>
@@ -373,7 +374,7 @@ function edAt(X, Y) { return IDS.find(id => pipXY(X, Y, RINGS[id])) || null; }
 
 /* ---------- map ---------- */
 const map = L.map("map", { zoomControl: false, attributionControl: true, zoomSnap: 0.5, tapTolerance: 20 });
-L.control.zoom({ position: "topright" }).addTo(map);
+L.control.zoom({ position: "bottomright" }).addTo(map);
 map.attributionControl.setPrefix(false);
 map.createPane("labels"); map.getPane("labels").style.zIndex = 450; map.getPane("labels").style.pointerEvents = "none";
 map.createPane("me"); map.getPane("me").style.zIndex = 640;
@@ -409,7 +410,7 @@ map.on("click", () => select((me && me.ed) || null));
 map.on("zoomend", () => paint());
 
 function paint() {
-  const searching = !!state.q.trim(), op = (parseFloat(C["fill-op"]) || .5) * (map.getZoom() >= 14 ? .7 : 1);
+  const searching = !!state.q.trim(), op = (parseFloat(C["fill-op"]) || .5) * (map.getZoom() >= 14 ? (isDark() ? .6 : .7) : 1);
   IDS.forEach(id => {
     const sel = state.sel === id, dim = searching && !matches(id);
     polys[id].setStyle({ fillColor: fillFor(id), fillOpacity: dim ? op * .25 : op, color: sel ? C.ink : C.surface, weight: sel ? 3.5 : 1.2, opacity: sel ? 1 : .9 });
@@ -431,7 +432,7 @@ function centerOn(ll, zoom, animate) {
 function fitTown() { map.fitBounds(townBounds, { paddingTopLeft: [10, 60], paddingBottomRight: [10, cardH() + 10] }); }
 
 /* ---------- your location ---------- */
-const meIcon = L.divIcon({ className: "", html: '<div class="medot"><b></b><i></i></div>', iconSize: [22, 22], iconAnchor: [11, 11] });
+const meIcon = L.divIcon({ className: "", html: '<div class="medot"><svg viewBox="-22 -22 44 44" width="44" height="44"><path class="hd" d="M0,-21 L8,-6 L-8,-6 Z"/><circle r="8"/></svg></div>', iconSize: [44, 44], iconAnchor: [22, 22] });
 const meAcc = L.circle([0, 0], { radius: 1, pane: "me", interactive: false, color: "", weight: 1, fillOpacity: .14 });
 const meMark = L.marker([0, 0], { icon: meIcon, pane: "me", interactive: false, keyboard: false });
 let me = null, watchId = null, follow = true, firstFix = true, wake = null, programmatic = false;
@@ -469,7 +470,7 @@ function onPos(p) {
   if (dot) {
     const moving = c.heading != null && !isNaN(c.heading) && (c.speed == null || c.speed > 1);
     dot.classList.toggle("heading", moving);
-    if (moving) dot.querySelector("b").style.transform = `rotate(${c.heading}deg)`;
+    if (moving) dot.querySelector(".hd").setAttribute("transform", `rotate(${c.heading})`);
   }
   if (me.ed) {
     const g = DATA.guide[me.ed];
@@ -554,7 +555,7 @@ const layersBtn = document.getElementById("layersbtn"), layersBox = document.get
 function renderLayersBtn() {
   const meta = RACES[state.race];
   const name = state.view === "cmp" ? meta.short : VIEWS[state.view];
-  layersBtn.innerHTML = `<span class="sw" style="background:${state.view === "split" ? C.amber : state.view === "gap" ? `linear-gradient(90deg,${C.teal},${C.amber})` : `linear-gradient(90deg,${C.rep},${C.dem})`}"></span>${esc(name)}${state.view === "split" || state.view === "gap" ? ` vs ${esc(meta.short)}` : ""} ▾`;
+  layersBtn.innerHTML = `<span class="sw" style="background:${state.view === "split" ? C.amber : state.view === "gap" ? `linear-gradient(90deg,${C.teal},${C.amber})` : `linear-gradient(90deg,${C.rep},${C.dem})`}"></span>${esc(name)}${state.view === "split" || state.view === "gap" ? ` · ${esc(meta.short)}` : ""} ▾`;
 }
 layersBtn.addEventListener("click", () => { const open = layersBox.hidden; layersBox.hidden = !open; layersBtn.setAttribute("aria-expanded", open); });
 function rampCSS(neg, pos) { return `linear-gradient(90deg, ${neg}, ${C.zero} 50%, ${pos})`; }
