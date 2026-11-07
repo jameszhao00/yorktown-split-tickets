@@ -3,152 +3,79 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="description" content="Election-district map of 2026 ticket splitting in Yorktown, NY.">
-<style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<meta name="description" content="Drive-around map of 2026 ticket splitting in Yorktown, NY, by election district.">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#F2F4F3" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#11161A" media="(prefers-color-scheme: dark)">
 <title>Yorktown Split Tickets</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Public+Sans:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <style>
-/* Layout: map-first civic report — map on the left, readout + legend on the right; district guide, table and notes below. */
+/* Layout: the map fills the screen; a card at the bottom says where you are and how it voted; color settings top left; everything else in a Details panel. */
 :root {
-  --bg: #F2F4F3;
-  --surface: #FFFFFF;
-  --ink: #1A2127;
-  --muted: #5A6670;
-  --rule: #D3D9DC;
-  --dem: #2A5DAC;
-  --rep: #BF3A30;
-  --zero: #E4E8E9;
-  --amber: #D58A12;
-  --teal: #11807A;
-  --water: #CBDFE6;
-  --water-line: #7AA4B2;
-  --road: #66717A;
-  --edge: #FFFFFF;
-  --label: #1A2127;
-  --halo: rgba(255,255,255,.8);
-  --chip: #E9EDEE;
-  --me: #6D3FD8;
-  --me-ring: #FFFFFF;
+  --bg: #F2F4F3; --surface: #FFFFFF; --ink: #1A2127; --muted: #5A6670; --rule: #D3D9DC;
+  --dem: #2A5DAC; --rep: #BF3A30; --zero: #E4E8E9; --amber: #D58A12; --teal: #11807A;
+  --chip: #E9EDEE; --me: #6D3FD8; --me-ring: #FFFFFF; --fill-op: .5; --water: #A8CCE0; --water-line: #5E93AE; --stop: #1A2127; --stop-ink: #FFFFFF;
+  --shadow: 0 8px 24px -10px rgba(0,0,0,.4);
   --font-display: "Barlow Condensed", "Arial Narrow", "Roboto Condensed", sans-serif;
   --font-body: "Public Sans", "Segoe UI", system-ui, -apple-system, sans-serif;
+  color-scheme: light;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     --bg: #11161A; --surface: #182026; --ink: #E5EAED; --muted: #98A5AE; --rule: #2B353C;
-    --dem: #6E9BE3; --rep: #E46A5F; --zero: #283137; --amber: #E8A83A; --teal: #2FB2A7;
-    --water: #1E3239; --water-line: #44707D; --road: #8C98A2; --edge: #11161A;
-    --label: #EEF2F4; --halo: rgba(10,14,17,.75); --chip: #222B31; --me: #B596FF; --me-ring: #11161A; color-scheme: dark;
+    --dem: #6E9BE3; --rep: #E46A5F; --zero: #3A454C; --amber: #E8A83A; --teal: #2FB2A7;
+    --chip: #222B31; --me: #B596FF; --me-ring: #11161A; --fill-op: .55; --water: #1F4152; --water-line: #4F8AA3; --stop: #F2F4F3; --stop-ink: #11161A; color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
   --bg: #11161A; --surface: #182026; --ink: #E5EAED; --muted: #98A5AE; --rule: #2B353C;
-  --dem: #6E9BE3; --rep: #E46A5F; --zero: #283137; --amber: #E8A83A; --teal: #2FB2A7;
-  --water: #1E3239; --water-line: #44707D; --road: #8C98A2; --edge: #11161A;
-  --label: #EEF2F4; --halo: rgba(10,14,17,.75); --chip: #222B31; --me: #B596FF; --me-ring: #11161A; color-scheme: dark;
+  --dem: #6E9BE3; --rep: #E46A5F; --zero: #3A454C; --amber: #E8A83A; --teal: #2FB2A7;
+  --chip: #222B31; --me: #B596FF; --me-ring: #11161A; --fill-op: .55; --water: #1F4152; --water-line: #4F8AA3; --stop: #F2F4F3; --stop-ink: #11161A; color-scheme: dark;
 }
 * { box-sizing: border-box; }
-body { background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 15px; line-height: 1.5; }
-.wrap { max-width: 1200px; margin: 0 auto; padding-block: 28px 56px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
-.eyebrow { font-family: var(--font-display); font-weight: 600; text-transform: uppercase; letter-spacing: .08em; font-size: 14px; color: var(--muted); }
-h1 { font-family: var(--font-display); font-weight: 700; font-size: clamp(34px, 5vw, 52px); line-height: 1; margin: 6px 0 12px; letter-spacing: -.005em; text-wrap: balance; }
-.lede { max-width: 70ch; margin: 0 0 10px; }
-.lede b { font-weight: 600; }
-.r { color: var(--rep); font-weight: 600; } .d { color: var(--dem); font-weight: 600; }
+html, body { margin: 0; height: 100%; overflow: hidden; background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 15px; line-height: 1.45; }
 .num { font-variant-numeric: tabular-nums; }
+button { font-family: inherit; }
+:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
 
-.grid { display: grid; gap: 18px 28px; grid-template-columns: minmax(0, 1.08fr) minmax(0, .92fr);
-  grid-template-areas: "map controls" "map readout" "map legend" "map findings"; grid-template-rows: auto auto auto 1fr; align-items: start; margin-top: 22px; }
-.mapbox { grid-area: map; min-width: 0; }
-.controls { grid-area: controls; min-width: 0; display: grid; gap: 14px; }
-.readout { grid-area: readout; min-width: 0; }
-.legend { grid-area: legend; min-width: 0; }
-.findings { grid-area: findings; min-width: 0; }
+/* ---------- map ---------- */
+#map { position: fixed; inset: 0; background: var(--bg); }
+.leaflet-container { font-family: var(--font-body); background: var(--bg); }
+.leaflet-control-attribution { font-size: 10px; background: color-mix(in srgb, var(--surface) 80%, transparent) !important; color: var(--muted); }
+.leaflet-control-attribution a { color: var(--muted); }
+.leaflet-bottom { bottom: var(--card-h, 0px); transition: bottom .2s; }
+.leaflet-bottom.leaflet-right .leaflet-control-zoom { margin-bottom: 26px; }
+.leaflet-top { top: env(safe-area-inset-top, 0px); }
+.leaflet-right { right: env(safe-area-inset-right, 0px); }
+.leaflet-bar a { background: var(--surface); color: var(--ink); border-color: var(--rule); width: 44px !important; height: 44px !important; line-height: 44px !important; font-size: 22px !important; }
+.leaflet-bar { border: 0 !important; box-shadow: var(--shadow) !important; border-radius: 10px !important; overflow: hidden; }
+.edlab { font: 700 15px/1 var(--font-display); color: var(--ink); text-align: center; text-shadow: 0 0 3px var(--surface), 0 0 3px var(--surface), 0 0 6px var(--surface); pointer-events: none; white-space: nowrap; }
+.edlab.me { color: var(--me); font-size: 18px; }
+.medot svg { display: block; overflow: visible; filter: drop-shadow(0 1px 3px rgba(0,0,0,.5)); }
+.medot circle { fill: var(--me); stroke: var(--me-ring); stroke-width: 3; }
+.medot .hd { fill: var(--me); stroke: var(--me-ring); stroke-width: 1.5; stroke-linejoin: round; display: none; }
+.medot.heading .hd { display: block; }
 
+/* ---------- floating controls ---------- */
+.fab { position: fixed; z-index: 800; display: flex; gap: 8px; align-items: flex-start; }
+.fab.tl { top: calc(env(safe-area-inset-top, 0px) + 10px); left: calc(env(safe-area-inset-left, 0px) + 10px); right: calc(env(safe-area-inset-right, 0px) + 10px); flex-wrap: wrap; }
+.btn { font: 600 15px var(--font-body); color: var(--ink); background: var(--surface); border: 1px solid var(--rule); border-radius: 10px; padding: 0 12px; min-height: 44px; cursor: pointer; box-shadow: var(--shadow); display: inline-flex; gap: 8px; align-items: center; white-space: nowrap; }
+.btn .sw { width: 14px; height: 14px; border-radius: 3px; display: inline-block; }
+.layers { background: var(--surface); border: 1px solid var(--rule); border-radius: 12px; box-shadow: var(--shadow); padding: 12px; display: grid; gap: 12px; width: min(340px, calc(100vw - 20px)); }
+.layers[hidden] { display: none; }
 .label-sm { font-family: var(--font-display); font-weight: 600; font-size: 13px; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); margin: 0 0 6px; }
-.seg { display: flex; flex-wrap: wrap; gap: 4px; padding: 3px; background: var(--chip); border-radius: 8px; width: fit-content; max-width: 100%; }
-.seg button { font: 600 14px/1 var(--font-body); color: var(--muted); background: transparent; border: 0; border-radius: 6px; padding: 9px 12px; cursor: pointer; }
-.seg button[aria-pressed="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 1px 2px rgba(0,0,0,.12); }
-.seg button:focus-visible, select:focus-visible, input:focus-visible, .chip:focus-visible, th button:focus-visible, tbody tr:focus-visible, .gcard:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
-.row-ctl { display: flex; flex-wrap: wrap; gap: 14px 22px; align-items: end; }
-select, input[type="search"] { font: 500 15px var(--font-body); color: var(--ink); background: var(--surface); border: 1px solid var(--rule); border-radius: 7px; padding: 8px 10px; }
-select { padding-right: 30px; }
-.find { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; }
-.find input { flex: 1 1 200px; min-width: 0; }
-.find .hits { font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
-.check { display: inline-flex; gap: 7px; align-items: center; font-size: 14px; color: var(--ink); cursor: pointer; }
-.check input { width: 16px; height: 16px; accent-color: var(--ink); }
+.seg { display: flex; flex-wrap: wrap; gap: 4px; padding: 3px; background: var(--chip); border-radius: 9px; }
+.seg button { flex: 1; font: 600 15px/1 var(--font-body); color: var(--muted); background: transparent; border: 0; border-radius: 7px; padding: 12px 10px; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 1px 2px rgba(0,0,0,.15); }
+select, input[type="search"] { font: 500 16px var(--font-body); color: var(--ink); background: var(--surface); border: 1px solid var(--rule); border-radius: 8px; padding: 10px; width: 100%; }
 
-.readout { background: var(--surface); border: 1px solid var(--rule); border-radius: 10px; padding: 14px 16px; }
-.ro-head { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: baseline; justify-content: space-between; margin-bottom: 10px; }
-.ro-title { font-family: var(--font-display); font-weight: 700; font-size: 24px; line-height: 1.05; }
-.ro-sub { color: var(--muted); font-size: 13px; }
-.pill { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 600; padding: 3px 9px; border-radius: 999px; background: var(--chip); color: var(--ink); white-space: nowrap; }
-.pill i { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
-.where { font-size: 13.5px; margin: 0 0 4px; color: var(--ink); }
-.where b { font-weight: 600; color: var(--muted); }
-.where.clip { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.where-box { padding-bottom: 8px; margin-bottom: 8px; border-bottom: 1px solid var(--rule); }
-.race { display: grid; grid-template-columns: 7.5em minmax(0,1fr) 4.2em; gap: 10px; align-items: center; margin: 7px 0; font-size: 14px; }
-.race .nm { color: var(--muted); font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.race .mg { text-align: right; font-weight: 700; font-variant-numeric: tabular-nums; }
-.bar { position: relative; height: 12px; border-radius: 3px; overflow: hidden; display: flex; background: var(--zero); }
-.bar span { display: block; height: 100%; }
-.bar::after { content: ""; position: absolute; left: 50%; top: -2px; bottom: -2px; width: 1px; background: var(--ink); opacity: .55; }
-.race-votes { grid-column: 2 / 4; color: var(--muted); font-size: 12.5px; margin-top: -5px; font-variant-numeric: tabular-nums; }
-.gapline { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--rule); font-size: 14px; }
-.gapline b { font-variant-numeric: tabular-nums; }
-
-@media (max-width: 860px) {
-  .grid { grid-template-columns: minmax(0, 1fr); grid-template-areas: "controls" "readout" "map" "legend" "findings"; grid-template-rows: none; }
-  .readout { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; box-shadow: 0 6px 16px -10px rgba(0,0,0,.35); padding: 10px 12px; }
-  .ro-title { font-size: 20px; }
-  .ro-head { margin-bottom: 4px; }
-  .race { margin: 4px 0; grid-template-columns: 6.5em minmax(0,1fr) 4.2em; }
-  .race-votes, .where.wide { display: none; }
-  .where { font-size: 12.5px; margin-bottom: 2px; }
-  .where-box { padding-bottom: 5px; margin-bottom: 5px; }
-  .gapline { margin-top: 6px; padding-top: 6px; font-size: 13px; }
-}
-
-.mapbox { position: relative; }
-.mapbox svg { display: block; width: 100%; height: auto; max-height: 86vh; touch-action: manipulation; }
-.ed { stroke: var(--edge); stroke-width: 1.1; vector-effect: non-scaling-stroke; cursor: pointer; transition: fill .25s, opacity .2s; }
-.ed:hover { stroke: var(--ink); stroke-width: 1.6; }
-.ed:focus { outline: none; }
-.ed:focus-visible { stroke: var(--ink); stroke-width: 2.4; }
-svg.searching .ed { opacity: .28; }
-svg.searching .ed.hit { opacity: 1; stroke: var(--ink); stroke-width: 1.8; }
-.water { fill: url(#waterfill); stroke: var(--water-line); stroke-width: .8; vector-effect: non-scaling-stroke; pointer-events: none; }
-.road { fill: none; stroke: var(--road); stroke-width: 1.3; vector-effect: non-scaling-stroke; stroke-linejoin: round; stroke-linecap: round; pointer-events: none; opacity: .85; }
-.road.tsp { stroke-width: 2.4; opacity: 1; }
-#selring { fill: none; stroke: var(--ink); stroke-width: 3; vector-effect: non-scaling-stroke; pointer-events: none; }
-.lab { pointer-events: none; paint-order: stroke; stroke: var(--halo); stroke-linejoin: round; }
-.lab.ed-n { font: 700 calc(var(--u, 14) * 11px) var(--font-display); fill: var(--label); stroke-width: calc(var(--u, 14) * 2.6px); }
-.lab.rd { font: 700 calc(var(--u, 14) * 10px) var(--font-display); fill: var(--road); stroke-width: calc(var(--u, 14) * 3px); letter-spacing: .02em; }
-.lab.rd.tsp { font-size: calc(var(--u, 14) * 11px); fill: var(--ink); }
-.lab.lk { font: italic 500 calc(var(--u, 14) * 10px) var(--font-body); fill: var(--water-line); stroke-width: calc(var(--u, 14) * 2.6px); }
-.lab.hm { font: 700 calc(var(--u, 14) * 11.5px) var(--font-display); text-transform: uppercase; letter-spacing: .12em; fill: var(--ink); opacity: .82; stroke-width: calc(var(--u, 14) * 3.2px); }
-.lab.mk { font: 400 calc(var(--u, 14) * 8px) var(--font-body); fill: var(--ink); stroke-width: calc(var(--u, 14) * 2.4px); }
-.lab.lm { font: 600 calc(var(--u, 14) * 9.5px) var(--font-body); fill: var(--ink); stroke-width: calc(var(--u, 14) * 2.6px); }
-#gMarks[hidden] { display: none; }
-.me-acc { fill: var(--me); opacity: .16; stroke: var(--me); stroke-width: 1; vector-effect: non-scaling-stroke; pointer-events: none; }
-.me-dot { fill: var(--me); stroke: var(--me-ring); stroke-width: calc(var(--u, 14) * 2.5px); pointer-events: none; }
-.me-pulse { fill: none; stroke: var(--me); stroke-width: calc(var(--u, 14) * 2px); opacity: .5; pointer-events: none; }
-.locbtn { font: 600 14px var(--font-body); color: var(--surface); background: var(--me); border: 0; border-radius: 7px; padding: 9px 14px; cursor: pointer; display: inline-flex; gap: 8px; align-items: center; }
-.locbtn[aria-pressed="true"] { background: var(--surface); color: var(--me); box-shadow: inset 0 0 0 1.5px var(--me); }
-.locbtn:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
-.locbtn .dot { width: 10px; height: 10px; border-radius: 50%; background: currentColor; }
-.locmsg { font-size: 13.5px; color: var(--ink); }
-.locmsg.err { color: var(--rep); }
-.youhere { color: var(--me); font-weight: 700; }
-@media (prefers-reduced-motion: no-preference) { .me-pulse { animation: mepulse 2s ease-out infinite; transform-box: fill-box; transform-origin: center; } }
-@keyframes mepulse { from { transform: scale(.6); opacity: .6; } to { transform: scale(2.2); opacity: 0; } }
-.maphint { font-size: 12.5px; color: var(--muted); margin-top: 6px; }
-.maphint .k { white-space: nowrap; }
-
-.legend .sw { display: grid; gap: 6px; }
+/* ---------- legend ---------- */
+.legend .sw { display: grid; gap: 5px; }
 .legend .item { display: flex; gap: 9px; align-items: center; font-size: 14px; }
 .legend .item i { flex: none; width: 16px; height: 16px; border-radius: 3px; border: 1px solid rgba(0,0,0,.08); }
 .legend .item .ct { margin-left: auto; color: var(--muted); font-variant-numeric: tabular-nums; }
@@ -156,142 +83,221 @@ svg.searching .ed.hit { opacity: 1; stroke: var(--ink); stroke-width: 1.8; }
 .ramp-ticks { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); margin-top: 4px; font-variant-numeric: tabular-nums; }
 .ramp-caps { display: flex; justify-content: space-between; font-size: 13px; margin-top: 2px; gap: 12px; }
 
-.findings p { margin: 0 0 10px; max-width: 62ch; }
-.chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0 12px; }
-.chip { font: 600 13px var(--font-body); border: 1px solid var(--rule); background: var(--surface); color: var(--ink); border-radius: 6px; padding: 4px 9px; cursor: pointer; font-variant-numeric: tabular-nums; }
-.chip:hover { border-color: var(--ink); }
-.chip.none { cursor: default; color: var(--muted); }
+/* ---------- bottom card ---------- */
+#card { position: fixed; z-index: 900; left: 0; right: 0; bottom: 0; margin: 0 auto; max-width: 560px; background: var(--surface); border-top: 1px solid var(--rule); border-radius: 16px 16px 0 0; box-shadow: 0 -8px 28px -12px rgba(0,0,0,.45);
+  padding: 12px max(16px, env(safe-area-inset-right, 0px)) calc(12px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); max-height: 70dvh; overflow-y: auto; overscroll-behavior: contain; }
+@media (min-width: 900px) { #card { left: 16px; right: auto; bottom: 16px; width: 440px; border: 1px solid var(--rule); border-radius: 14px; } }
+@media (prefers-reduced-motion: no-preference) { #card.flash { animation: flash 1.2s ease-out; } }
+@keyframes flash { 0% { box-shadow: 0 0 0 4px var(--me), 0 -8px 28px -12px rgba(0,0,0,.45); } 100% { box-shadow: 0 0 0 0 transparent, 0 -8px 28px -12px rgba(0,0,0,.45); } }
+.cardtop { display: flex; gap: 10px; align-items: center; justify-content: space-between; margin-bottom: 6px; min-height: 44px; }
+.locmsg { font-size: 14px; color: var(--muted); min-width: 0; flex: 1; }
+.cardtop .iconbtn { width: 44px; height: 44px; }
+.minirow { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.minirow .ro-title { font-size: 28px; }
+.minirow .mg { font: 700 20px/1 var(--font-display); font-variant-numeric: tabular-nums; }
+.minirow .mg small { font: 600 13px var(--font-body); color: var(--muted); margin-right: 3px; }
+#card.mini .locmsg { display: none; }
+#card.mini .cardtop { margin-bottom: 4px; justify-content: flex-end; }
+.locmsg.err { color: var(--rep); }
+.locmsg b { color: var(--me); }
+.locbtn { flex: none; font: 600 15px var(--font-body); color: var(--me-ring); background: var(--me); border: 0; border-radius: 10px; padding: 0 16px; min-height: 44px; cursor: pointer; display: inline-flex; gap: 8px; align-items: center; }
+.locbtn.on { background: var(--chip); color: var(--ink); }
+.locbtn.recenter { background: var(--surface); color: var(--me); box-shadow: inset 0 0 0 2px var(--me); }
+.locbtn .dot { width: 10px; height: 10px; border-radius: 50%; background: currentColor; }
+.ro-head { display: flex; gap: 6px 12px; align-items: center; justify-content: space-between; flex-wrap: wrap; margin-bottom: 4px; }
+.ro-title { font-family: var(--font-display); font-weight: 700; font-size: 34px; line-height: 1; }
+.ro-sub { color: var(--muted); font-size: 13px; }
+.youhere { color: var(--me); font-weight: 700; }
+.pill { display: inline-flex; align-items: center; gap: 7px; font-size: 14px; font-weight: 600; padding: 5px 11px; border-radius: 999px; background: var(--chip); color: var(--ink); }
+.pill i { width: 12px; height: 12px; border-radius: 3px; display: inline-block; flex: none; }
+.race { display: grid; grid-template-columns: 6.8em minmax(0,1fr) 4.4em; gap: 10px; align-items: center; margin: 6px 0; font-size: 15px; }
+.race .nm { color: var(--muted); font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.race .mg { text-align: right; font: 700 20px/1 var(--font-display); font-variant-numeric: tabular-nums; }
+.bar { position: relative; height: 14px; border-radius: 3px; overflow: hidden; display: flex; background: var(--zero); }
+.bar span { display: block; height: 100%; }
+.bar::after { content: ""; position: absolute; left: 50%; top: -2px; bottom: -2px; width: 1px; background: var(--ink); opacity: .55; }
+.race-votes { grid-column: 2 / 4; color: var(--muted); font-size: 12.5px; margin-top: -5px; font-variant-numeric: tabular-nums; }
+.gapline { margin-top: 6px; font-size: 15px; }
+.more { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--rule); }
+.where { font-size: 14px; margin: 0 0 4px; }
+.where b { font-weight: 600; color: var(--muted); }
+.mute { color: var(--muted); }
+.linkbtn { font: 600 14px var(--font-body); color: var(--muted); background: none; border: 0; padding: 8px 0 0; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
 
-h2 { font-family: var(--font-display); font-weight: 700; font-size: 28px; line-height: 1.1; margin: 40px 0 6px; text-wrap: balance; }
+/* ---------- water, stops, trip ---------- */
+.lklab { font: italic 600 13px/1.1 var(--font-body); color: var(--water-line); text-align: center; text-shadow: 0 0 3px var(--surface), 0 0 3px var(--surface); pointer-events: none; }
+.stopmk { width: 28px; height: 28px; border-radius: 50%; background: var(--stop); color: var(--stop-ink); border: 2px solid var(--stop-ink); font: 700 15px/24px var(--font-display); text-align: center; box-shadow: 0 2px 6px rgba(0,0,0,.4); }
+.actions { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+.act { flex: 1; font: 600 15px var(--font-body); min-height: 44px; border-radius: 10px; border: 1px solid var(--rule); background: var(--chip); color: var(--ink); cursor: pointer; padding: 0 12px; white-space: nowrap; }
+.act.primary { background: var(--ink); color: var(--surface); border-color: var(--ink); }
+.act:disabled { opacity: .45; cursor: default; }
+.stops { list-style: none; padding: 0; margin: 8px 0 0; display: grid; gap: 8px; max-width: 640px; }
+.stops li { display: flex; gap: 10px; align-items: center; background: var(--surface); border: 1px solid var(--rule); border-radius: 10px; padding: 8px 10px; }
+.stops .n { flex: none; width: 28px; height: 28px; border-radius: 50%; background: var(--stop); color: var(--stop-ink); font: 700 15px/28px var(--font-display); text-align: center; }
+.stops .t { flex: 1; min-width: 0; cursor: pointer; }
+.stops .t b { display: block; font-weight: 600; }
+.stops .t span { color: var(--muted); font-size: 13px; }
+.iconbtn { flex: none; width: 40px; height: 40px; border-radius: 8px; border: 1px solid var(--rule); background: var(--chip); color: var(--ink); font-size: 18px; cursor: pointer; }
+.sugg { display: grid; gap: 6px; max-width: 640px; }
+.sugg .row { display: flex; gap: 10px; align-items: center; background: var(--surface); border: 1px solid var(--rule); border-radius: 10px; padding: 8px 10px; }
+.sugg .row .t { flex: 1; min-width: 0; font-size: 14px; }
+.sugg .row .t b { font-weight: 600; }
+.sugg .row .t span { color: var(--muted); }
+.sugg .row .pill { font-size: 12.5px; padding: 3px 9px; }
+.grouphead { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; max-width: 640px; margin: 18px 0 6px; }
+.grouphead p { margin: 0; font-weight: 600; }
+.tripbar { position: sticky; bottom: 0; background: var(--bg); border-top: 1px solid var(--rule); padding: 10px max(16px, env(safe-area-inset-right, 0px)) calc(10px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); }
+.tripbar .actions { max-width: 640px; margin: 0 auto; }
+.fine { color: var(--muted); font-size: 13px; max-width: 640px; }
+
+/* ---------- details panel ---------- */
+#details, #trip { position: fixed; inset: 0; z-index: 1000; background: var(--bg); overflow-y: auto; overscroll-behavior: contain; }
+#details[hidden], #trip[hidden] { display: none; }
+.dhead { position: sticky; top: 0; z-index: 2; background: var(--bg); border-bottom: 1px solid var(--rule); display: flex; justify-content: space-between; align-items: center; gap: 12px;
+  padding: calc(env(safe-area-inset-top, 0px) + 8px) max(16px, env(safe-area-inset-right, 0px)) 8px max(16px, env(safe-area-inset-left, 0px)); }
+.dhead h1 { font: 700 26px/1 var(--font-display); margin: 0; }
+.wrap { max-width: 1100px; margin: 0 auto; padding: 16px max(16px, env(safe-area-inset-right, 0px)) calc(48px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); }
+.eyebrow { font-family: var(--font-display); font-weight: 600; text-transform: uppercase; letter-spacing: .08em; font-size: 14px; color: var(--muted); }
+.lede { max-width: 70ch; margin: 6px 0 10px; }
+.lede b { font-weight: 600; }
+.r { color: var(--rep); font-weight: 600; } .d { color: var(--dem); font-weight: 600; }
+h2 { font-family: var(--font-display); font-weight: 700; font-size: 26px; line-height: 1.1; margin: 32px 0 6px; }
 .sect-lede { color: var(--muted); max-width: 70ch; margin: 0 0 12px; }
-
-.guide { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 330px), 1fr)); gap: 10px; }
+.find { display: flex; gap: 10px; align-items: center; margin: 14px 0; max-width: 520px; }
+.find .hits { font-size: 13px; color: var(--muted); white-space: nowrap; }
+.findings p { margin: 0 0 8px; max-width: 70ch; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0 12px; }
+.chip { font: 600 14px var(--font-body); border: 1px solid var(--rule); background: var(--surface); color: var(--ink); border-radius: 7px; padding: 7px 11px; cursor: pointer; font-variant-numeric: tabular-nums; }
+.chip.none { cursor: default; color: var(--muted); }
+.guide { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr)); gap: 10px; }
 .gcard { background: var(--surface); border: 1px solid var(--rule); border-radius: 10px; padding: 12px 14px; cursor: pointer; display: grid; gap: 4px; align-content: start; font-size: 13.5px; }
-.gcard:hover { border-color: var(--ink); }
 .gcard.sel { box-shadow: inset 3px 0 0 var(--ink); border-color: var(--ink); }
 .gh { display: flex; gap: 10px; align-items: baseline; }
 .gnum { font: 700 26px/1 var(--font-display); font-variant-numeric: tabular-nums; min-width: 1.6em; }
 .gwhere { font-weight: 600; flex: 1; min-width: 0; }
 .gl b { color: var(--muted); font-weight: 600; }
 .gl.dim { color: var(--muted); }
-.mute { color: var(--muted); }
-
+.gh .pill { font-size: 12.5px; padding: 3px 9px; }
 .tablewrap { overflow-x: auto; border: 1px solid var(--rule); border-radius: 10px; background: var(--surface); margin-top: 12px; }
 table { border-collapse: collapse; width: 100%; min-width: 720px; font-size: 14px; font-variant-numeric: tabular-nums; }
-th, td { padding: 8px 12px; text-align: right; border-bottom: 1px solid var(--rule); white-space: nowrap; }
+th, td { padding: 9px 12px; text-align: right; border-bottom: 1px solid var(--rule); white-space: nowrap; }
 th:first-child, td:first-child, th:last-child, td:last-child { text-align: left; }
-thead th { position: sticky; top: 0; background: var(--surface); font-weight: 600; color: var(--muted); font-size: 13px; }
+thead th { background: var(--surface); font-weight: 600; color: var(--muted); font-size: 13px; }
 th button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
 th button[aria-sort] { color: var(--ink); }
 tbody tr { cursor: pointer; }
-tbody tr:hover { background: var(--chip); }
 tbody tr.sel { background: var(--chip); box-shadow: inset 3px 0 0 var(--ink); }
+td .pill { font-size: 12.5px; padding: 3px 9px; }
 .gapcell { display: inline-flex; align-items: center; gap: 8px; justify-content: flex-end; }
 .gapcell .mini { width: 46px; height: 8px; background: var(--zero); border-radius: 2px; position: relative; overflow: hidden; }
 .gapcell .mini span { position: absolute; top: 0; bottom: 0; }
 .gapcell .mini::after { content: ""; position: absolute; left: 50%; top: 0; bottom: 0; width: 1px; background: var(--muted); }
-.notes { margin-top: 36px; color: var(--muted); font-size: 13.5px; max-width: 78ch; }
-.notes h3 { font-family: var(--font-display); font-weight: 700; font-size: 18px; color: var(--ink); margin: 0 0 6px; letter-spacing: .01em; }
+.notes { margin-top: 32px; color: var(--muted); font-size: 13.5px; max-width: 78ch; }
+.notes h3 { font-family: var(--font-display); font-weight: 700; font-size: 18px; color: var(--ink); margin: 0 0 6px; }
 .notes ul { padding-left: 18px; margin: 6px 0 0; }
 .notes li { margin: 4px 0; }
 .notes a { color: inherit; }
-@media (prefers-reduced-motion: reduce) { .ed { transition: none; } }
 </style>
-
 </head>
 <body>
-<div class="wrap">
-  <header>
+<div id="map" role="application" aria-label="Map of Yorktown election districts on a street map"></div>
+
+<div class="fab tl">
+  <button type="button" class="btn" id="layersbtn" aria-expanded="false" aria-controls="layers"></button>
+  <button type="button" class="btn" id="tripbtn">Trip</button>
+  <button type="button" class="btn" id="detailsbtn">Info</button>
+  <div class="layers" id="layers" hidden>
+    <div>
+      <p class="label-sm" id="viewlab">Color districts by</p>
+      <div class="seg" role="group" aria-labelledby="viewlab" id="views">
+        <button type="button" data-view="split" aria-pressed="true">Split</button>
+        <button type="button" data-view="gap" aria-pressed="false">Gap</button>
+        <button type="button" data-view="sup" aria-pressed="false">Supervisor</button>
+        <button type="button" data-view="cmp" aria-pressed="false" id="cmpbtn">House</button>
+      </div>
+    </div>
+    <div>
+      <p class="label-sm"><label for="race">Compare supervisor with</label></p>
+      <select id="race">
+        <option value="CD17" selected>House, NY-17</option>
+        <option value="GOV">Governor</option>
+        <option value="AG">Attorney General</option>
+        <option value="CMP">Comptroller</option>
+        <option value="SD40">State Senate, SD-40</option>
+      </select>
+    </div>
+    <section class="legend" id="legend" aria-label="Legend"></section>
+  </div>
+</div>
+
+<section id="card" aria-label="Where you are">
+  <div class="cardtop">
+    <div class="locmsg" id="locmsg" role="status"></div>
+    <button type="button" class="iconbtn" id="minibtn" aria-label="Shrink card" aria-pressed="false">▾</button>
+    <button type="button" class="locbtn" id="locate"><span class="dot" aria-hidden="true"></span><span id="loctext">Start driving</span></button>
+  </div>
+  <div id="readout" aria-live="polite"></div>
+</section>
+
+<div id="trip" hidden role="dialog" aria-modal="true" aria-labelledby="ttitle">
+  <div class="dhead"><h1 id="ttitle">Trip</h1><button type="button" class="btn" id="closetrip">Back to map</button></div>
+  <div class="wrap" style="padding-bottom:16px">
+    <p class="label-sm">Your stops</p>
+    <ol class="stops" id="stops"></ol>
+    <p class="fine" id="tripnote"></p>
+    <div id="suggest"></div>
+  </div>
+  <div class="tripbar"><div class="actions">
+    <button type="button" class="act" id="orderbtn">Order for driving</button>
+    <button type="button" class="act primary" id="gmapsbtn">Open in Google Maps</button>
+  </div></div>
+</div>
+
+<div id="details" hidden role="dialog" aria-modal="true" aria-labelledby="dtitle">
+  <div class="dhead"><h1 id="dtitle">Yorktown Split Tickets</h1><button type="button" class="btn" id="closedetails">Back to map</button></div>
+  <div class="wrap">
     <div class="eyebrow">Town of Yorktown · Nov 3, 2026 general election · unofficial</div>
-    <h1>Yorktown Split Tickets</h1>
     <p class="lede">
       <b>Ed Lachterman</b> <span class="r">(R)</span> won supervisor by <b class="num">5.6 points</b>.
       The federal and statewide races were much closer inside Yorktown: <b>Mike Lawler</b> <span class="r">(R)</span> carried the town by <span class="num">1.1</span> in the House race and <b>Bruce Blakeman</b> <span class="r">(R)</span> by <span class="num">0.9</span> for governor,
       while Westchester as a whole went <span class="d num">66–34</span> for Hochul and <span class="d num">63–37</span> for Conley.
     </p>
-    <p class="lede">
-      The <b>Taconic State Parkway</b> runs north to south through the middle of town. Mohegan Lake and Shrub Oak sit on its west side; Jefferson Valley and downtown Yorktown Heights are east of it.
-      Search for a street, school, park or restaurant to find its district.
-    </p>
-  </header>
-
-  <div class="grid">
-    <section class="controls" aria-label="Map controls">
-      <div class="find">
-        <button type="button" class="locbtn" id="locate" aria-pressed="false"><span class="dot" aria-hidden="true"></span><span id="loctext">Show my location</span></button>
-        <span class="locmsg" id="locmsg" role="status"></span>
-      </div>
-      <div class="find">
-        <input type="search" id="find" placeholder="Find a street or place, e.g. London Rd, Trader Joe's" aria-label="Find a street or place" autocomplete="off">
-        <span class="hits" id="hits"></span>
-      </div>
-      <div class="row-ctl">
-        <div>
-          <p class="label-sm" id="viewlab">Color districts by</p>
-          <div class="seg" role="group" aria-labelledby="viewlab" id="views">
-            <button type="button" data-view="split" aria-pressed="true">Split</button>
-            <button type="button" data-view="gap" aria-pressed="false">Gap</button>
-            <button type="button" data-view="sup" aria-pressed="false">Supervisor</button>
-            <button type="button" data-view="cmp" aria-pressed="false" id="cmpbtn">House</button>
-          </div>
-        </div>
-        <div>
-          <p class="label-sm"><label for="race">Compare supervisor with</label></p>
-          <select id="race">
-            <option value="CD17" selected>House, NY-17</option>
-            <option value="GOV">Governor</option>
-            <option value="AG">Attorney General</option>
-            <option value="CMP">Comptroller</option>
-            <option value="SD40">State Senate, SD-40</option>
-          </select>
-        </div>
-        <label class="check"><input type="checkbox" id="showmarks" checked> Landmarks</label>
-      </div>
-    </section>
-
-    <section class="readout" id="readout" aria-live="polite"></section>
-
-    <figure class="mapbox" style="margin:0">
-      <svg id="map" role="img" aria-label="Map of Yorktown election districts with the Taconic State Parkway, main roads, hamlets and landmarks"></svg>
-      <figcaption class="maphint">Tap or click a district for its numbers and what's there; tap outside the town to go back to the town total.
-        Landmarks: <span class="k">● park</span> · <span class="k">■ school</span> · <span class="k">◆ shopping</span> · <span class="k">▲ town services</span></figcaption>
-    </figure>
-
-    <section class="legend" id="legend" aria-label="Legend"></section>
+    <div class="find">
+      <input type="search" id="find" placeholder="Find a street or place, e.g. London Rd, Trader Joe's" aria-label="Find a street or place" autocomplete="off">
+      <span class="hits" id="hits"></span>
+    </div>
     <section class="findings" id="findings"></section>
+
+    <h2>District guide</h2>
+    <p class="sect-lede">Where each district sits, its main streets, and the parks, schools, shops and places to eat inside it. Tap a card to see it on the map.</p>
+    <div class="guide" id="guide"></div>
+
+    <h2>District by district</h2>
+    <div class="tablewrap">
+      <table id="tbl"><thead><tr id="thead"></tr></thead><tbody id="tbody"></tbody></table>
+    </div>
+
+    <section class="notes">
+      <h3>How to read this</h3>
+      <ul>
+        <li><b>Margin</b> is two-party: Democratic votes minus Republican votes, as a share of the two combined. Write-ins are left out. Each candidate's votes are summed across every line they appeared on (Lachterman: Republican and Conservative; Mirchandani: Democratic and Community First; Lawler: Republican and Conservative; Conley: Democratic and Working Families).</li>
+        <li><b>Split</b> marks districts where the supervisor winner and the comparison-race winner came from different parties.</li>
+        <li><b>Gap</b> is how many points more Republican the supervisor race was than the comparison race in the same district. Amber means Lachterman ran ahead of his party's candidate; teal means Mirchandani ran ahead of hers.</li>
+        <li><b>Net crossover voters</b> is the gap in Republican share times the district's two-party vote. It is a floor, not a count: voters who split in opposite directions cancel out, and some people skip the supervisor race or the other one.</li>
+        <li><b>Taconic</b> distances are measured from the middle of each district to the nearest point on the parkway.</li>
+        <li>Landmarks and restaurants come from OpenStreetMap, which covers schools and parks well but lists only some of the town's restaurants.</li>
+        <li><b>Trip stops</b> go to a landmark inside each district (a park, shop, school or town building), or the district's middle where it has none. Your stops are kept in this browser only.</li>
+        <li><b>Your location</b> is read by your own browser only after you tap “Start driving”. The page never sends or saves it. While it's on, the page keeps your screen awake.</li>
+        <li>Results are unofficial. They include early, Election Day and absentee ballots; affidavit ballots had not been added yet, so totals can still move a little.</li>
+      </ul>
+      <h3 style="margin-top:16px">Sources</h3>
+      <ul>
+        <li>Votes: <a href="https://app.enhancedvoting.com/results/public/westchester-county-ny/elections/2026GeneralElection" target="_blank" rel="noopener">Westchester County Board of Elections results</a>, election-district breakdowns, published Nov 7, 2026 at 10:01 AM ET (42 of 42 districts reporting).</li>
+        <li>District boundaries: <a href="https://giswww.westchestergov.com/arcgis/rest/services/Datahub_Boundaries/MapServer/0" target="_blank" rel="noopener">Westchester County GIS</a> (election district linework current as of April 2023), simplified for display.</li>
+        <li>Street map: tiles © Esri, HERE, Garmin, © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap contributors</a>. Reservoirs and lakes: Westchester County GIS. Landmarks and restaurants: © OpenStreetMap contributors.</li>
+      </ul>
+    </section>
   </div>
-
-  <h2>District guide</h2>
-  <p class="sect-lede">Where each district sits, its main streets, and the parks, schools, shops and places to eat inside it. Distances are from the middle of the district. Click a card to show it on the map.</p>
-  <div class="guide" id="guide"></div>
-
-  <h2 id="tabletitle">District by district</h2>
-  <div class="tablewrap">
-    <table id="tbl">
-      <thead><tr id="thead"></tr></thead>
-      <tbody id="tbody"></tbody>
-    </table>
-  </div>
-
-  <section class="notes">
-    <h3>How to read this</h3>
-    <ul>
-      <li><b>Margin</b> is two-party: Democratic votes minus Republican votes, as a share of the two combined. Write-ins are left out. Each candidate's votes are summed across every line they appeared on (Lachterman: Republican and Conservative; Mirchandani: Democratic and Community First; Lawler: Republican and Conservative; Conley: Democratic and Working Families).</li>
-      <li><b>Split</b> marks districts where the supervisor winner and the comparison-race winner came from different parties.</li>
-      <li><b>Gap</b> is how many points more Republican the supervisor race was than the comparison race in the same district. Amber means Lachterman ran ahead of his party's candidate; teal means Mirchandani ran ahead of hers.</li>
-      <li><b>Net crossover voters</b> is the gap in Republican share times the district's two-party vote. It is a floor, not a count: voters who split in opposite directions cancel out, and some people skip the supervisor race or the other one.</li>
-      <li><b>Taconic</b> distances are measured from the middle of each district to the nearest point on the parkway. "Taconic runs through it" means the parkway crosses the district.</li>
-      <li>Landmarks and restaurants come from OpenStreetMap, which covers schools and parks well but lists only some of the town's restaurants. A district with no food listed may still have places to eat.</li>
-      <li><b>Your location</b> is read by your own browser only after you tap “Show my location”. The page never sends or saves it.</li>
-      <li>Results are unofficial. They include early, Election Day and absentee ballots; affidavit ballots had not been added yet, so totals can still move a little.</li>
-    </ul>
-    <h3 style="margin-top:16px">Sources</h3>
-    <ul>
-      <li>Votes: <a href="https://app.enhancedvoting.com/results/public/westchester-county-ny/elections/2026GeneralElection" target="_blank" rel="noopener">Westchester County Board of Elections results</a>, election-district breakdowns, published Nov 7, 2026 at 10:01 AM ET (42 of 42 districts reporting).</li>
-      <li>District boundaries, streets, roads and water: <a href="https://giswww.westchestergov.com/arcgis/rest/services/Datahub_Boundaries/MapServer/0" target="_blank" rel="noopener">Westchester County GIS</a> (election district linework current as of April 2023), simplified for display.</li>
-      <li>Hamlets, landmarks and restaurants: © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap contributors</a>.</li>
-    </ul>
-  </section>
 </div>
 
 <script>
@@ -304,15 +310,11 @@ const RACES = {
   SD40: { label: "State Senate, SD-40", short: "State Senate", d: "Harckham", r: "Esposito" }
 };
 const SUP = { label: "Supervisor", short: "Supervisor", d: "Mirchandani", r: "Lachterman" };
-const NS = "http://www.w3.org/2000/svg";
-const state = { view: "split", race: "CD17", sel: null, hover: null, q: "", sort: { key: "gap", dir: -1 } };
+const VIEWS = { split: "Split", gap: "Gap", sup: "Supervisor" };
+const state = { view: "split", race: "CD17", sel: null, q: "", more: false, mini: false, sort: { key: "gap", dir: -1 } };
 const IDS = Object.keys(DATA.res).sort();
 const CAT = { P: "Parks", S: "Schools", R: "Shopping", C: "Town services", F: "Food" };
-const GLYPH = { P: "●", S: "■", R: "◆", C: "▲" };
-const MAJOR = { "Jefferson Valley Mall": "Jefferson Valley Mall", "Franklin D. Roosevelt State Park": "FDR State Park", "Yorktown High School": "Yorktown HS",
-  "Lakeland High School": "Lakeland HS", "Trader Joe's": "Trader Joe's", "Mohansic Golf Course": "Mohansic Golf", "Turkey Mountain (west unit)": "Turkey Mtn",
-  "Sylvan Glen Park Preserve": "Sylvan Glen", "Hilltop Hanover Farm": "Hilltop Hanover Farm", "Crompond Elementary School": "Crompond Elem." };
-const HAMLETS = ["Mohegan Lake", "Shrub Oak", "Jefferson Valley", "Yorktown Heights", "Kitchawan"];
+const store = { get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }, set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} } };
 
 /* ---------- numbers ---------- */
 function two(v) { return v[0] + v[1]; }
@@ -331,7 +333,7 @@ function stats(rec) {
 }
 function fmtM(m) { if (Math.abs(m) < 0.05) return "Even"; return (m > 0 ? "D+" : "R+") + Math.abs(m).toFixed(1); }
 function fmtN(n) { return n.toLocaleString("en-US"); }
-function edName(id) { return "Yorktown " + id.slice(2); }
+function edName(id) { return "District " + (+id.slice(2)); }
 function esc(s) { return String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])); }
 function tacShort(g) { return g.side === "through" ? "On it" : (g.td > 0 ? "E " : "W ") + Math.abs(g.td).toFixed(1) + " mi"; }
 
@@ -352,12 +354,13 @@ function matches(id) {
 let C = {};
 function readColors() {
   const cs = getComputedStyle(document.documentElement);
-  ["dem","rep","zero","amber","teal","ink","muted","surface"].forEach(k => C[k] = cs.getPropertyValue("--" + k).trim());
+  ["dem","rep","zero","amber","teal","ink","muted","surface","me","fill-op","water","water-line"].forEach(k => C[k] = cs.getPropertyValue("--" + k).trim());
 }
+function isDark() { return getComputedStyle(document.documentElement).colorScheme.includes("dark"); }
 function hex(c) { c = c.replace("#", ""); return [0, 2, 4].map(i => parseInt(c.slice(i, i + 2), 16)); }
 function mix(a, b, t) { const A = hex(a), B = hex(b); return "rgb(" + A.map((x, i) => Math.round(x + (B[i] - x) * t)).join(",") + ")"; }
 function diverge(v, max, neg, pos) { const t = Math.max(-1, Math.min(1, v / max)); const e = Math.pow(Math.abs(t), 0.85); return t >= 0 ? mix(C.zero, pos, e) : mix(C.zero, neg, e); }
-function catColor(cat) { return { RD: C.amber, DR: C.teal, RR: mix(C.zero, C.rep, .42), DD: mix(C.zero, C.dem, .42), T: C.zero }[cat]; }
+function catColor(cat) { return { RD: C.amber, DR: C.teal, RR: mix(C.zero, C.rep, .55), DD: mix(C.zero, C.dem, .55), T: C.zero }[cat]; }
 function fillFor(id) {
   const st = stats(DATA.res[id]);
   if (state.view === "split") return catColor(st.cat);
@@ -366,129 +369,151 @@ function fillFor(id) {
   return diverge(st.mc, 40, C.rep, C.dem);
 }
 
-/* ---------- map ---------- */
-const svg = document.getElementById("map");
-const [vx, vy, vw, vh] = DATA.vb;
-svg.setAttribute("viewBox", DATA.vb.join(" "));
-const P = (x, y) => [x * DATA.K, DATA.Ymax - y];
-const inView = ([px, py]) => px > vx + 60 && px < vx + vw - 60 && py > vy + 60 && py < vy + vh - 60;
-function pathD(enc) { return enc.split(";").map(r => { const a = r.split(","); return "M" + a[0] + "," + a[1] + (a.length > 2 ? "l" + a.slice(2).join(",") : "") + "z"; }).join(""); }
-function lineD(enc) { return enc.split(";").map(r => { const a = r.split(","); return "M" + a[0] + "," + a[1] + "l" + a.slice(2).join(","); }).join(""); }
-function el(tag, attrs, parent) { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); if (parent) parent.appendChild(e); return e; }
-
-const defs = el("defs", {}, svg);
-const pat = el("pattern", { id: "waterfill", patternUnits: "userSpaceOnUse", width: 90, height: 90 }, defs);
-el("rect", { width: 90, height: 90, fill: "var(--water)" }, pat);
-el("path", { d: "M0,45 H90", stroke: "var(--water-line)", "stroke-width": 8, opacity: .45 }, pat);
-el("rect", { x: vx, y: vy, width: vw, height: vh, fill: "transparent" }, svg).addEventListener("click", () => select(null));
-const geo = el("g", { transform: `matrix(${DATA.K} 0 0 -1 0 ${DATA.Ymax})` }, svg);
-const gEds = el("g", {}, geo), gWater = el("g", {}, geo), gRoads = el("g", {}, geo);
-const selRing = el("path", { id: "selring", d: "" }, geo);
-const gLab = el("g", {}, svg);
-const gMarks = el("g", { id: "gMarks" }, svg);
-const gTop = el("g", {}, svg);
-const edPath = {};
-
-IDS.forEach(id => {
-  const p = el("path", { d: pathD(DATA.eds[id].g), class: "ed", tabindex: 0, role: "button", "aria-label": edName(id) }, gEds);
-  p.addEventListener("click", e => { e.stopPropagation(); select(state.sel === id ? null : id); });
-  p.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); select(state.sel === id ? null : id); } });
-  p.addEventListener("pointerenter", e => { if (e.pointerType === "mouse") { state.hover = id; renderReadout(); } });
-  p.addEventListener("pointerleave", e => { if (e.pointerType === "mouse") { state.hover = null; renderReadout(); } });
-  edPath[id] = p;
-});
-DATA.lakes.forEach(l => el("path", { d: pathD(l.g), class: "water", "fill-rule": "evenodd" }, gWater));
-DATA.roads.forEach(r => el("path", { d: lineD(r.g), class: "road" + (r.n.startsWith("Taconic") ? " tsp" : "") }, gRoads));
-
-function anchorFor(px) { return px > vx + vw * .8 ? "end" : px < vx + vw * .18 ? "start" : "middle"; }
-function txt(parent, x, y, cls, s, extra) { const t = el("text", Object.assign({ x, y, class: "lab " + cls, "text-anchor": "middle", "dominant-baseline": "central" }, extra || {}), parent); t.textContent = s; return t; }
-DATA.lakes.filter(l => l.n && l.lp).forEach(l => { const [px, py] = P(...l.lp); if (inView([px, py])) txt(gLab, px, py, "lk", l.n, { "text-anchor": anchorFor(px) }); });
-DATA.roads.filter(r => r.label && r.lp).forEach(r => { const [px, py] = P(...r.lp); txt(gLab, px, py, "rd" + (r.label === "Taconic" ? " tsp" : ""), r.label === "Taconic" ? "Taconic" : "Rt " + (r.label === "35" ? "35/202" : r.label)); });
-IDS.forEach(id => { const [px, py] = P(...DATA.eds[id].lp); txt(gLab, px, py, "ed-n", String(+id.slice(2))); });
-// landmarks (toggle) and major landmark names
-DATA.pois.filter(p => GLYPH[p.c]).forEach(p => {
-  const [px, py] = P(p.x, p.y); if (!inView([px, py])) return;
-  const m = txt(gMarks, px, py, "mk", GLYPH[p.c]);
-  const t = el("title", {}, m); t.textContent = p.n;
-  if (MAJOR[p.n]) txt(gMarks, px, py, "lm", MAJOR[p.n], { "text-anchor": px > vx + vw * .7 ? "end" : "start", dx: px > vx + vw * .7 ? "-0.8em" : "0.8em" });
-});
-// hamlet names on top
-DATA.pois.filter(p => p.c === "H" && HAMLETS.includes(p.n)).forEach(p => { const [px, py] = P(p.x, p.y); if (inView([px, py])) txt(gTop, px, py, "hm", p.n, { "text-anchor": anchorFor(px) }); });
-svg.insertBefore(svg.querySelector("rect[fill='transparent']"), geo);
-
-function scaleLabels() {
-  const r = svg.getBoundingClientRect();
-  if (!r.width) return;
-  svg.style.setProperty("--u", Math.max(vw / r.width, vh / r.height).toFixed(2));
-}
-new ResizeObserver(scaleLabels).observe(svg);
-
-function paint() {
-  const searching = !!state.q.trim();
-  svg.classList.toggle("searching", searching);
-  IDS.forEach(id => { edPath[id].setAttribute("fill", fillFor(id)); edPath[id].classList.toggle("hit", searching && matches(id)); });
-  selRing.setAttribute("d", state.sel ? pathD(DATA.eds[state.sel].g) : "");
-}
-
-/* ---------- your location ---------- */
+/* ---------- geometry: the data is in 1e-5 degree steps from (73.87 W, 41.2 N) ---------- */
+const toLL = (X, Y) => [Y / 1e5 + 41.2, X / 1e5 - 73.87];
 const RINGS = {};
-IDS.forEach(id => { const a = DATA.eds[id].g.split(";")[0].split(",").map(Number); const pts = [[a[0], a[1]]]; for (let i = 2; i < a.length; i += 2) pts.push([pts[pts.length - 1][0] + a[i], pts[pts.length - 1][1] + a[i + 1]]); RINGS[id] = pts; });
+IDS.forEach(id => {
+  const a = DATA.eds[id].g.split(",").map(Number); const pts = [[a[0], a[1]]];
+  for (let i = 2; i < a.length; i += 2) pts.push([pts[pts.length - 1][0] + a[i], pts[pts.length - 1][1] + a[i + 1]]);
+  RINGS[id] = pts;
+});
 function pipXY(x, y, r) { let c = false; for (let i = 0, j = r.length - 1; i < r.length; j = i++) { const [xi, yi] = r[i], [xj, yj] = r[j]; if (((yi > y) !== (yj > y)) && (x < (xj - xi) * (y - yi) / (yj - yi) + xi)) c = !c; } return c; }
 function edAt(X, Y) { return IDS.find(id => pipXY(X, Y, RINGS[id])) || null; }
-const meAcc = el("circle", { class: "me-acc", r: 0, cx: -1e6, cy: -1e6 }, gTop);
-const mePulse = el("circle", { class: "me-pulse", r: 0, cx: -1e6, cy: -1e6 }, gTop);
-const meDot = el("circle", { class: "me-dot", r: 0, cx: -1e6, cy: -1e6 }, gTop);
-let me = null, watchId = null, firstFix = true;
-function placeMe() {
-  if (!me) { [meAcc, mePulse, meDot].forEach(c => c.setAttribute("r", 0)); return; }
-  const [px, py] = P(me.X, me.Y), u = parseFloat(svg.style.getPropertyValue("--u")) || 14;
-  [meAcc, mePulse, meDot].forEach(c => { c.setAttribute("cx", px); c.setAttribute("cy", py); });
-  meAcc.setAttribute("r", Math.min(me.acc / 1.1132, 4000));
-  meDot.setAttribute("r", 6.5 * u); mePulse.setAttribute("r", 6.5 * u);
+
+/* ---------- map ---------- */
+const map = L.map("map", { zoomControl: false, attributionControl: true, zoomSnap: 0.5, tapTolerance: 20 });
+L.control.zoom({ position: "bottomright" }).addTo(map);
+map.attributionControl.setPrefix(false);
+map.createPane("labels"); map.getPane("labels").style.zIndex = 450; map.getPane("labels").style.pointerEvents = "none";
+map.createPane("me"); map.getPane("me").style.zIndex = 640;
+const ATTR = 'Tiles © <a href="https://www.esri.com">Esri</a>, HERE, Garmin, © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
+let base = null, labels = null;
+function setTiles() {
+  const s = isDark() ? "Dark" : "Light", u = n => `https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_${s}_Gray_${n}/MapServer/tile/{z}/{y}/{x}`;
+  if (base) { base.remove(); labels.remove(); }
+  base = L.tileLayer(u("Base"), { maxZoom: 19, maxNativeZoom: 16, attribution: ATTR }).addTo(map);
+  labels = L.tileLayer(u("Reference"), { maxZoom: 19, maxNativeZoom: 16, pane: "labels" }).addTo(map);
 }
-function locMsg(s, err) { const m = document.getElementById("locmsg"); m.textContent = s; m.classList.toggle("err", !!err); }
-function stopLocating() {
-  if (watchId !== null) navigator.geolocation.clearWatch(watchId);
-  watchId = null; me = null; firstFix = true; placeMe(); renderReadout();
-  document.getElementById("locate").setAttribute("aria-pressed", "false");
-  document.getElementById("loctext").textContent = "Show my location";
+const polys = {}, labs = {};
+IDS.forEach(id => {
+  const p = L.polygon(RINGS[id].map(([x, y]) => toLL(x, y)), { weight: 1.2, bubblingMouseEvents: false }).addTo(map);
+  p.on("click", () => { select(state.sel === id ? (me && me.ed) || null : id); });
+  polys[id] = p;
+  labs[id] = L.marker(toLL(...DATA.eds[id].lp), { interactive: false, keyboard: false, pane: "labels",
+    icon: L.divIcon({ className: "edlab", html: String(+id.slice(2)), iconSize: [40, 18], iconAnchor: [20, 9] }) }).addTo(map);
+});
+const townBounds = L.featureGroup(Object.values(polys)).getBounds();
+map.fitBounds(townBounds); // a view right away, so every layer is drawn before anything paints
+// reservoirs and lakes sit over the district colors, so water reads as water
+map.createPane("water"); map.getPane("water").style.zIndex = 420; map.getPane("water").style.pointerEvents = "none";
+const waters = DATA.lakes.map(l => L.polygon(l.g.split(";").map(r => {
+  const a = r.split(",").map(Number); const pts = [[a[0], a[1]]];
+  for (let i = 2; i < a.length; i += 2) pts.push([pts[pts.length - 1][0] + a[i], pts[pts.length - 1][1] + a[i + 1]]);
+  return pts.map(([x, y]) => toLL(x, y));
+}), { pane: "water", interactive: false, weight: 1, fillOpacity: .92 }).addTo(map));
+DATA.lakes.filter(l => l.n && l.lp).forEach(l => L.marker(toLL(...l.lp), { interactive: false, keyboard: false, pane: "labels",
+  icon: L.divIcon({ className: "lklab", html: esc(l.n).replace(" ", "<br>"), iconSize: [110, 32], iconAnchor: [55, 16] }) }).addTo(map));
+function paintWater() { waters.forEach(w => w.setStyle({ color: C["water-line"], fillColor: C.water })); }
+map.on("click", () => select((me && me.ed) || null));
+map.on("zoomend", () => paint());
+
+function paint() {
+  const searching = !!state.q.trim(), op = (parseFloat(C["fill-op"]) || .5) * (map.getZoom() >= 14 ? (isDark() ? .6 : .7) : 1);
+  IDS.forEach(id => {
+    const sel = state.sel === id, dim = searching && !matches(id);
+    polys[id].setStyle({ fillColor: fillFor(id), fillOpacity: dim ? op * .25 : op, color: sel ? C.ink : C.surface, weight: sel ? 3.5 : 1.2, opacity: sel ? 1 : .9 });
+    if (sel) polys[id].bringToFront();
+    labs[id].getElement()?.classList.toggle("me", !!(me && me.ed === id));
+  });
 }
-function onPos(p) {
-  const X = (p.coords.longitude + 73.87) * 1e5, Y = (p.coords.latitude - 41.2) * 1e5;
-  me = { X, Y, acc: p.coords.accuracy, ed: edAt(X, Y) };
-  placeMe();
-  if (me.ed) {
-    const g = DATA.guide[me.ed];
-    locMsg(`You're in district ${+me.ed.slice(2)} · ${g.tac.startsWith("Taconic") ? "the " + g.tac : g.tac.charAt(0).toLowerCase() + g.tac.slice(1)}`);
-    if (firstFix) { select(me.ed); }
-  } else {
-    const [px, py] = P(X, Y);
-    locMsg(inView([px, py]) ? "You're just outside Yorktown." : "You're outside Yorktown, so you're off this map.");
-  }
-  firstFix = false; renderReadout();
+
+/* ---------- card height: keeps the map's controls and the followed point clear of it ---------- */
+const card = document.getElementById("card");
+function cardH() { return window.innerWidth >= 900 ? 0 : card.offsetHeight; }
+new ResizeObserver(() => { document.documentElement.style.setProperty("--card-h", cardH() + "px"); }).observe(card);
+// center a point in the part of the map above the card
+function centerOn(ll, zoom, animate) {
+  const z = zoom ?? map.getZoom();
+  const pt = map.project(ll, z).add([0, cardH() / 2]);
+  map.setView(map.unproject(pt, z), z, { animate: animate !== false, duration: .6 });
 }
-function onErr(e) {
-  stopLocating();
-  locMsg(e.code === 1 ? "Location is blocked. Allow location for this page in your browser or phone settings, then try again." : "Couldn't get your location. Try again outdoors or with Wi-Fi on.", true);
+function fitTown() { map.fitBounds(townBounds, { paddingTopLeft: [10, 60], paddingBottomRight: [10, cardH() + 10] }); }
+
+/* ---------- your location ---------- */
+const meIcon = L.divIcon({ className: "", html: '<div class="medot"><svg viewBox="-22 -22 44 44" width="44" height="44"><path class="hd" d="M0,-21 L8,-6 L-8,-6 Z"/><circle r="8"/></svg></div>', iconSize: [44, 44], iconAnchor: [22, 22] });
+const meAcc = L.circle([0, 0], { radius: 1, pane: "me", interactive: false, color: "", weight: 1, fillOpacity: .14 });
+const meMark = L.marker([0, 0], { icon: meIcon, pane: "me", interactive: false, keyboard: false });
+let me = null, watchId = null, follow = true, firstFix = true, wake = null, programmatic = false;
+const locBtn = document.getElementById("locate"), locText = document.getElementById("loctext");
+function locMsg(html, err) { const m = document.getElementById("locmsg"); m.innerHTML = html; m.classList.toggle("err", !!err); }
+function renderLocBtn() {
+  locBtn.classList.toggle("on", watchId !== null && follow);
+  locBtn.classList.toggle("recenter", watchId !== null && !follow);
+  locText.textContent = watchId === null ? "Start driving" : follow ? "Stop" : "Recenter";
 }
-document.getElementById("locate").addEventListener("click", () => {
-  if (watchId !== null) { stopLocating(); locMsg(""); return; }
+async function keepAwake() {
+  try { if ("wakeLock" in navigator && watchId !== null && document.visibilityState === "visible" && !wake) { wake = await navigator.wakeLock.request("screen"); wake.addEventListener("release", () => { wake = null; }); } } catch (e) {}
+}
+document.addEventListener("visibilitychange", keepAwake);
+function startLocating() {
   if (!("geolocation" in navigator)) { locMsg("This browser can't share your location.", true); return; }
   locMsg("Finding you…");
-  document.getElementById("locate").setAttribute("aria-pressed", "true");
-  document.getElementById("loctext").textContent = "Stop";
-  watchId = navigator.geolocation.watchPosition(onPos, onErr, { enableHighAccuracy: true, maximumAge: 10000, timeout: 30000 });
+  follow = true; firstFix = true;
+  watchId = navigator.geolocation.watchPosition(onPos, onErr, { enableHighAccuracy: true, maximumAge: 5000, timeout: 30000 });
+  store.set("yt-drive", "1"); keepAwake(); renderLocBtn();
+}
+function stopLocating() {
+  if (watchId !== null) navigator.geolocation.clearWatch(watchId);
+  watchId = null; me = null; meAcc.remove(); meMark.remove();
+  if (wake) { wake.release().catch(() => {}); wake = null; }
+  store.set("yt-drive", "0"); renderLocBtn(); paint(); renderReadout();
+}
+function onPos(p) {
+  const c = p.coords, X = (c.longitude + 73.87) * 1e5, Y = (c.latitude - 41.2) * 1e5, ll = [c.latitude, c.longitude];
+  const prev = me && me.ed;
+  me = { ll, acc: c.accuracy, ed: edAt(X, Y) };
+  meAcc.setLatLng(ll).setRadius(c.accuracy).setStyle({ color: C.me, fillColor: C.me }).addTo(map);
+  meMark.setLatLng(ll).addTo(map);
+  const dot = meMark.getElement()?.querySelector(".medot");
+  if (dot) {
+    const moving = c.heading != null && !isNaN(c.heading) && (c.speed == null || c.speed > 1);
+    dot.classList.toggle("heading", moving);
+    if (moving) dot.querySelector(".hd").setAttribute("transform", `rotate(${c.heading})`);
+  }
+  if (me.ed) {
+    const g = DATA.guide[me.ed];
+    locMsg(`You're in <b>district ${+me.ed.slice(2)}</b> · ${esc(g.tac.startsWith("Taconic") ? "on the Taconic" : g.tac)}`);
+  } else {
+    locMsg(townBounds.pad(.05).contains(ll) ? "You're just outside Yorktown." : "You're outside Yorktown. Drive in to see the districts.");
+  }
+  if (me.ed !== prev || firstFix) {
+    // entering a district shows it, unless you're looking at one you tapped
+    if (firstFix || state.sel === prev || state.sel === null) select(me.ed);
+    if (!firstFix && me.ed) { card.classList.remove("flash"); void card.offsetWidth; card.classList.add("flash"); }
+  } else { paint(); renderReadout(); }
+  if (follow) { programmatic = true; centerOn(ll, firstFix ? Math.max(map.getZoom(), 15) : undefined, !firstFix); programmatic = false; }
+  firstFix = false; renderLocBtn();
+}
+function onErr(e) {
+  if (e.code === 3 && me) return; // a slow fix while we already have one: keep going
+  stopLocating();
+  locMsg(e.code === 1 ? "Location is blocked. Allow it for this site in your browser or phone settings, then tap Start driving." : "Couldn't get your location. Tap Start driving to try again.", true);
+}
+locBtn.addEventListener("click", () => {
+  if (watchId === null) startLocating();
+  else if (!follow) { follow = true; if (me) centerOn(me.ll, Math.max(map.getZoom(), 14)); renderLocBtn(); }
+  else { stopLocating(); locMsg(""); }
 });
-new ResizeObserver(placeMe).observe(svg);
+map.on("dragstart", () => { if (watchId !== null && follow) { follow = false; renderLocBtn(); } });
 
-/* ---------- readout ---------- */
+/* ---------- card ---------- */
 function raceRow(meta, v) {
   const t = two(v), dp = t ? v[0] / t * 100 : 50, m = margin(v);
   return `<div class="race">
     <div class="nm">${meta.short}</div>
     <div class="bar" role="img" aria-label="${meta.d} ${dp.toFixed(1)} percent, ${meta.r} ${(100 - dp).toFixed(1)} percent"><span style="width:${dp}%;background:${C.dem}"></span><span style="width:${100 - dp}%;background:${C.rep}"></span></div>
     <div class="mg" style="color:${m > 0 ? C.dem : m < 0 ? C.rep : C.ink}">${fmtM(m)}</div>
-    <div class="race-votes">${meta.d} ${fmtN(v[0])} · ${meta.r} ${fmtN(v[1])}</div>
+    ${state.more ? `<div class="race-votes">${meta.d} ${fmtN(v[0])} · ${meta.r} ${fmtN(v[1])}</div>` : ""}
   </div>`;
 }
 function catLabel(cat, short) { return { RD: `R for supervisor, D for ${short}`, DR: `D for supervisor, R for ${short}`, RR: "Republican in both", DD: "Democratic in both", T: "Tied in one race" }[cat]; }
@@ -498,37 +523,59 @@ function gapSentence(st) {
   const who = st.lean > 0 ? `<b>Lachterman</b> ran <b>${L.toFixed(1)} pts</b> ahead of ${meta.r}` : `<b>Mirchandani</b> ran <b>${L.toFixed(1)} pts</b> ahead of ${meta.d}`;
   return `${who} · ≈ <b>${fmtN(Math.round(Math.abs(st.net)))}</b> net crossover voters`;
 }
-function hereList(g, limit) {
-  const parts = [];
-  ["P", "S", "R", "C"].forEach(c => { if (g[c].length) parts.push(g[c].slice(0, limit).join(", ")); });
-  return parts.join(" · ");
-}
-function whereBlock(id) {
-  if (!id) return `<div class="where-box"><p class="where">The Taconic runs north–south through the middle of town. Pick a district to see where it is.</p></div>`;
-  const g = DATA.guide[id];
-  const here = hereList(g, 3);
-  return `<div class="where-box">
+function moreBlock(id) {
+  if (!id) return `<div class="more"><p class="where">The Taconic runs north–south through the middle of town: Mohegan Lake and Shrub Oak on its west side, Jefferson Valley and downtown Yorktown Heights east of it.</p></div>`;
+  const g = DATA.guide[id], lines = [];
+  ["P", "S", "R", "C", "F"].forEach(c => { if (g[c].length) lines.push(`<p class="where"><b>${CAT[c]}</b> ${esc(g[c].join(", "))}</p>`); });
+  if (!g.P.length && !g.S.length && !g.R.length) lines.push(`<p class="where mute">No mapped landmarks; nearest is ${esc(g.nearest || "")}</p>`);
+  return `<div class="more">
     <p class="where"><b>Where</b> ${esc(g.band)} Yorktown · ${esc(g.tac)} · ${esc(g.near)}</p>
-    <p class="where clip"><b>Streets</b> ${esc([...g.roads, ...g.streets].join(", "))}</p>
-    <p class="where wide"><b>Here</b> ${here ? esc(here) : `<span class="mute">No mapped landmarks; nearest is ${esc(g.nearest || "")}</span>`}</p>
-    ${g.F.length ? `<p class="where wide clip"><b>Food</b> ${esc(g.F.join(", "))}</p>` : ""}
+    <p class="where"><b>Streets</b> ${esc([...g.roads, ...g.streets].join(", "))}</p>
+    ${lines.join("")}
   </div>`;
 }
 function renderReadout() {
-  const id = state.hover || state.sel, meta = RACES[state.race];
+  const id = state.sel, meta = RACES[state.race];
   let rec, title, sub;
-  if (id) { rec = DATA.res[id]; title = edName(id); sub = `${fmtN(rec.b)} ballots cast` + (me && me.ed === id ? ` · <span class="youhere">You're here</span>` : ""); }
-  else { rec = { SUP: townTotals("SUP") }; rec[state.race] = townTotals(state.race); title = "All of Yorktown"; sub = `42 election districts · ${fmtN(IDS.reduce((s, k) => s + DATA.res[k].b, 0))} ballots`; }
+  if (id) {
+    rec = DATA.res[id]; title = edName(id);
+    sub = `${fmtN(rec.b)} ballots` + (me && me.ed === id ? ` · <span class="youhere">You're here</span>` : me && me.ed ? ` · you're in ${+me.ed.slice(2)}` : "");
+  } else { rec = { SUP: townTotals("SUP") }; rec[state.race] = townTotals(state.race); title = "All of Yorktown"; sub = `42 districts · ${fmtN(IDS.reduce((s, k) => s + DATA.res[k].b, 0))} ballots`; }
   const st = stats(rec);
+  card.classList.toggle("mini", state.mini);
+  if (state.mini) {
+    const mg = (label, v) => { const m = margin(v); return `<span class="mg" style="color:${m > 0 ? C.dem : m < 0 ? C.rep : C.ink}"><small>${label}</small>${fmtM(m)}</span>`; };
+    document.getElementById("readout").innerHTML = `<div class="minirow"><span class="ro-title">${id ? +id.slice(2) : "Town"}</span><span class="pill"><i style="background:${catColor(st.cat)}"></i>${catLabel(st.cat, meta.short)}</span>${mg("Sup", rec.SUP)}${mg(meta.short, rec[state.race])}</div>`;
+    return;
+  }
   document.getElementById("readout").innerHTML = `
     <div class="ro-head"><div><div class="ro-title">${title}</div><div class="ro-sub num">${sub}</div></div>
     <span class="pill"><i style="background:${catColor(st.cat)}"></i>${catLabel(st.cat, meta.short)}</span></div>
-    ${whereBlock(id)}
     ${raceRow(SUP, rec.SUP)}${raceRow(meta, rec[state.race])}
-    <div class="gapline">${gapSentence(st)}</div>`;
+    <div class="gapline">${gapSentence(st)}</div>
+    ${state.more ? moreBlock(id) : ""}
+    ${id ? `<div class="actions"><button type="button" class="act" data-act="go">Directions</button><button type="button" class="act${inTrip(id) ? "" : " primary"}" data-act="add">${inTrip(id) ? "✓ In trip" : "+ Add stop"}</button></div>` : ""}
+    <button type="button" class="linkbtn" id="morebtn" aria-expanded="${state.more}">${state.more ? "Less" : id ? "What's in this district" : "More"}</button>`;
 }
+const miniBtn = document.getElementById("minibtn");
+function setMini(on) { state.mini = on; store.set("yt-mini", on ? "1" : "0"); miniBtn.textContent = on ? "▴" : "▾"; miniBtn.setAttribute("aria-pressed", on); miniBtn.setAttribute("aria-label", on ? "Expand card" : "Shrink card"); renderReadout(); }
+miniBtn.addEventListener("click", () => { setMini(!state.mini); if (me && follow) centerOn(me.ll); });
+document.getElementById("readout").addEventListener("click", e => {
+  if (state.mini) { setMini(false); return; }
+  if (e.target.id === "morebtn") { state.more = !state.more; renderReadout(); return; }
+  const a = e.target.closest("[data-act]"); if (!a || !state.sel) return;
+  if (a.dataset.act === "go") openGmaps([stopFor(state.sel)]);
+  else { if (inTrip(state.sel)) trip = trip.filter(x => x !== state.sel); else trip.push(state.sel); saveTrip(); }
+});
 
-/* ---------- legend ---------- */
+/* ---------- layers + legend ---------- */
+const layersBtn = document.getElementById("layersbtn"), layersBox = document.getElementById("layers");
+function renderLayersBtn() {
+  const meta = RACES[state.race];
+  const name = state.view === "cmp" ? meta.short : VIEWS[state.view];
+  layersBtn.innerHTML = `<span class="sw" style="background:${state.view === "split" ? C.amber : state.view === "gap" ? `linear-gradient(90deg,${C.teal},${C.amber})` : `linear-gradient(90deg,${C.rep},${C.dem})`}"></span>${esc(name)}${state.view === "split" || state.view === "gap" ? ` · ${esc(meta.short)}` : ""} ▾`;
+}
+layersBtn.addEventListener("click", () => { const open = layersBox.hidden; layersBox.hidden = !open; layersBtn.setAttribute("aria-expanded", open); });
 function rampCSS(neg, pos) { return `linear-gradient(90deg, ${neg}, ${C.zero} 50%, ${pos})`; }
 function renderLegend() {
   const meta = RACES[state.race], box = document.getElementById("legend");
@@ -548,7 +595,16 @@ function renderLegend() {
   }
 }
 
-/* ---------- findings ---------- */
+/* ---------- details panel ---------- */
+const details = document.getElementById("details");
+document.getElementById("detailsbtn").addEventListener("click", () => { layersBox.hidden = true; layersBtn.setAttribute("aria-expanded", false); renderDetails(); details.hidden = false; details.scrollTop = 0; });
+document.getElementById("closedetails").addEventListener("click", () => { details.hidden = true; });
+document.addEventListener("keydown", e => { if (e.key === "Escape") { details.hidden = true; tripBox.hidden = true; layersBox.hidden = true; } });
+function showOnMap(id) {
+  details.hidden = true; select(id);
+  if (watchId !== null) { follow = false; renderLocBtn(); }
+  map.fitBounds(polys[id].getBounds(), { paddingTopLeft: [20, 70], paddingBottomRight: [20, cardH() + 20], maxZoom: 16 });
+}
 function chips(ids) {
   if (!ids.length) return `<div class="chips"><span class="chip none">None</span></div>`;
   return `<div class="chips">` + ids.map(id => `<button type="button" class="chip" data-ed="${id}" title="${esc(DATA.guide[id].tac + " · " + DATA.guide[id].near)}">${+id.slice(2)}</button>`).join("") + `</div>`;
@@ -563,19 +619,15 @@ function renderFindings() {
   const winC = town.mc > 0 ? `${meta.d} (D) carried Yorktown by ${town.mc.toFixed(1)}` : town.mc < 0 ? `${meta.r} (R) carried Yorktown by ${(-town.mc).toFixed(1)}` : `the ${meta.short} race was tied in Yorktown`;
   document.getElementById("findings").innerHTML = `
     <p class="label-sm">What the ${meta.short} comparison shows</p>
-    <p>Lachterman won by ${(-town.ms).toFixed(1)}; ${winC}. He ran ahead of ${meta.r} in <b>${ahead} of 42</b> districts, worth about <b>${fmtN(Math.round(town.net))}</b> net crossover voters town-wide.</p>
+    <p>Lachterman won by ${(-town.ms).toFixed(1)}; ${winC}. He ran ahead of ${meta.r} in <b>${ahead} of 42</b> districts, worth about <b>${fmtN(Math.round(town.net))}</b> net crossover voters town-wide. Tap a number to see it on the map.</p>
     <p><b>R for supervisor, D for ${meta.short}</b> (${rd.length})</p>${chips(rd)}
     <p><b>D for supervisor, R for ${meta.short}</b> (${dr.length})</p>${chips(dr)}
     ${tie.length ? `<p><b>Tied in one race</b> (${tie.length})</p>${chips(tie)}` : ""}
     <p><b>Biggest Lachterman overperformance</b></p>${chips(top)}`;
 }
-document.getElementById("findings").addEventListener("click", e => { const b = e.target.closest("[data-ed]"); if (b) select(b.dataset.ed, true); });
-
-/* ---------- district guide ---------- */
 function renderGuide() {
   const meta = RACES[state.race];
-  const box = document.getElementById("guide");
-  box.innerHTML = IDS.filter(matches).map(id => {
+  document.getElementById("guide").innerHTML = IDS.filter(matches).map(id => {
     const g = DATA.guide[id], st = stats(DATA.res[id]);
     const lines = [];
     ["P", "S", "R", "C", "F"].forEach(c => { if (g[c].length) lines.push(`<div class="gl"><b>${CAT[c]}</b> ${esc(g[c].join(", "))}</div>`); });
@@ -588,11 +640,6 @@ function renderGuide() {
     </div>`;
   }).join("") || `<p class="mute">No district matches “${esc(state.q)}”.</p>`;
 }
-const guideBox = document.getElementById("guide");
-guideBox.addEventListener("click", e => { const c = e.target.closest("[data-ed]"); if (c) select(c.dataset.ed, true); });
-guideBox.addEventListener("keydown", e => { const c = e.target.closest("[data-ed]"); if (c && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); select(c.dataset.ed, true); } });
-
-/* ---------- table ---------- */
 const COLS = [
   { key: "id", label: "District" }, { key: "td", label: "Taconic" }, { key: "b", label: "Ballots" }, { key: "ms", label: "Supervisor" },
   { key: "mc", label: "House" }, { key: "gap", label: "Gap, pts" }, { key: "net", label: "Net crossover" }, { key: "cat", label: "Pattern" }
@@ -616,51 +663,126 @@ function renderTable() {
     </tr>`;
   }).join("");
 }
-document.getElementById("thead").addEventListener("click", e => {
-  const b = e.target.closest("button[data-k]"); if (!b) return;
-  const k = b.dataset.k; state.sort = { key: k, dir: state.sort.key === k ? -state.sort.dir : (k === "id" || k === "cat" || k === "td" ? 1 : -1) }; renderTable();
-});
-const tbody = document.getElementById("tbody");
-tbody.addEventListener("click", e => { const tr = e.target.closest("tr[data-ed]"); if (tr) select(tr.dataset.ed, true); });
-tbody.addEventListener("keydown", e => { const tr = e.target.closest("tr[data-ed]"); if (tr && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); select(tr.dataset.ed, true); } });
-
-/* ---------- state ---------- */
-function select(id, reveal) {
-  state.sel = id; paint(); renderReadout(); renderTable(); renderGuide();
-  if (reveal && id) {
-    const r = svg.getBoundingClientRect();
-    if (r.top < 0 || r.bottom > innerHeight) svg.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "center" });
-  }
-}
 function renderHits() {
   const q = state.q.trim();
   document.getElementById("hits").textContent = q ? (n => n === 1 ? "1 district" : n + " districts")(IDS.filter(matches).length) : "";
 }
+function renderDetails() { renderFindings(); renderGuide(); renderTable(); renderHits(); }
+document.getElementById("thead").addEventListener("click", e => {
+  const b = e.target.closest("button[data-k]"); if (!b) return;
+  const k = b.dataset.k; state.sort = { key: k, dir: state.sort.key === k ? -state.sort.dir : (k === "id" || k === "cat" || k === "td" ? 1 : -1) }; renderTable();
+});
+details.addEventListener("click", e => { const t = e.target.closest("[data-ed]"); if (t) showOnMap(t.dataset.ed); });
+details.addEventListener("keydown", e => { const t = e.target.closest("[data-ed]"); if (t && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); showOnMap(t.dataset.ed); } });
+document.getElementById("find").addEventListener("input", e => { state.q = e.target.value; paint(); renderGuide(); renderTable(); renderHits(); });
+
+/* ---------- trip: stops to drive to, opened in Google Maps ---------- */
+const POI = {}; DATA.pois.forEach(p => { if (!POI[p.n]) POI[p.n] = p; });
+// a district's stop is a landmark inside it (park, shopping, school, town service, food), else its middle
+function stopFor(id) {
+  const g = DATA.guide[id];
+  for (const c of ["P", "R", "S", "C", "F"]) for (const n of g[c]) { const p = POI[n]; if (p && pipXY(p.x, p.y, RINGS[id])) return { id, name: n, ll: toLL(p.x, p.y) }; }
+  return { id, name: null, ll: toLL(...DATA.eds[id].lp) };
+}
+let trip = []; try { trip = JSON.parse(store.get("yt-trip") || "[]").filter(id => DATA.res[id]); } catch (e) { trip = []; }
+const inTrip = id => trip.includes(id);
+const stopLayer = L.layerGroup().addTo(map);
+function saveTrip() { store.set("yt-trip", JSON.stringify(trip)); renderStops(); renderReadout(); renderTripBtn(); if (!tripBox.hidden) renderTrip(); }
+function renderStops() {
+  stopLayer.clearLayers();
+  trip.forEach((id, i) => L.marker(stopFor(id).ll, { pane: "me", keyboard: false, icon: L.divIcon({ className: "", html: `<div class="stopmk">${i + 1}</div>`, iconSize: [28, 28], iconAnchor: [14, 14] }) })
+    .on("click", () => select(id)).addTo(stopLayer));
+}
+function renderTripBtn() { document.getElementById("tripbtn").textContent = trip.length ? `Trip · ${trip.length}` : "Trip"; }
+const MAXSTOPS = 10; // Google Maps takes a destination and up to 9 stops on the way
+function gmapsUrl(stops) {
+  const f = s => s.ll[0].toFixed(5) + "," + s.ll[1].toFixed(5);
+  const last = stops[stops.length - 1], mid = stops.slice(0, -1).slice(0, MAXSTOPS - 1);
+  return "https://www.google.com/maps/dir/?api=1&travelmode=driving&destination=" + encodeURIComponent(f(last)) + (mid.length ? "&waypoints=" + encodeURIComponent(mid.map(f).join("|")) : "");
+}
+function openGmaps(stops) { if (stops.length) window.open(gmapsUrl(stops), "_blank", "noopener"); }
+function dist(a, b) { const dy = a[0] - b[0], dx = (a[1] - b[1]) * Math.cos(a[0] * Math.PI / 180); return dx * dx + dy * dy; }
+function orderTrip() {
+  // nearest stop next, starting from where you are (or the first stop)
+  const left = trip.slice(), out = [];
+  let at = me ? me.ll : stopFor(left[0]).ll;
+  while (left.length) { let bi = 0; left.forEach((id, i) => { if (dist(at, stopFor(id).ll) < dist(at, stopFor(left[bi]).ll)) bi = i; }); const id = left.splice(bi, 1)[0]; out.push(id); at = stopFor(id).ll; }
+  trip = out; saveTrip();
+}
+const tripBox = document.getElementById("trip");
+function stopLine(id) {
+  const s = stopFor(id), st = stats(DATA.res[id]), meta = RACES[state.race];
+  return { title: s.name ? `${esc(s.name)}` : edName(id), sub: `${s.name ? edName(id) + " · " : ""}${esc(catLabel(st.cat, meta.short))} · gap ${Math.abs(st.lean).toFixed(1)}`, st };
+}
+function renderTrip() {
+  const meta = RACES[state.race];
+  document.getElementById("stops").innerHTML = trip.length ? trip.map((id, i) => { const l = stopLine(id); return `<li>
+      <span class="n">${i + 1}</span><span class="t" data-show="${id}"><b>${l.title}</b><span>${l.sub}</span></span>
+      ${i ? `<button type="button" class="iconbtn" data-up="${id}" aria-label="Move up">↑</button>` : ""}
+      <button type="button" class="iconbtn" data-rm="${id}" aria-label="Remove">✕</button></li>`; }).join("")
+    : `<li class="mute" style="justify-content:center">No stops yet. Add suggested ones below, or tap a district on the map and choose Add stop.</li>`;
+  document.getElementById("tripnote").textContent = trip.length > MAXSTOPS ? `Google Maps takes ${MAXSTOPS} stops at a time, so it will open the first ${MAXSTOPS}.` : trip.length ? "Google Maps starts from where you are and drives the stops in this order." : "";
+  document.getElementById("gmapsbtn").disabled = !trip.length; document.getElementById("orderbtn").disabled = trip.length < 2;
+  const all = IDS.map(id => ({ id, ...stats(DATA.res[id]) }));
+  const groups = [
+    [`R for supervisor, D for ${meta.short}`, all.filter(s => s.cat === "RD").sort((a, b) => b.lean - a.lean)],
+    [`D for supervisor, R for ${meta.short}`, all.filter(s => s.cat === "DR").sort((a, b) => a.lean - b.lean)],
+    ["Biggest Lachterman overperformance", all.slice().sort((a, b) => b.lean - a.lean).slice(0, 5)],
+    ["Most Democratic", all.slice().sort((a, b) => b.mc - a.mc).slice(0, 3)],
+    ["Most Republican", all.slice().sort((a, b) => a.mc - b.mc).slice(0, 3)]
+  ];
+  document.getElementById("suggest").innerHTML = `<p class="label-sm" style="margin-top:22px">Suggested stops</p>` + groups.filter(g => g[1].length).map(([name, list], gi) => `
+    <div class="grouphead"><p>${esc(name)}</p><button type="button" class="linkbtn" style="padding:0" data-addall="${gi}">Add all</button></div>
+    <div class="sugg">${list.map(s => { const l = stopLine(s.id); return `<div class="row"><span class="pill"><i style="background:${catColor(s.cat)}"></i>${+s.id.slice(2)}</span>
+      <span class="t" data-show="${s.id}"><b>${l.title}</b><br><span>${fmtM(s.ms)} supervisor · ${fmtM(s.mc)} ${esc(meta.short)}</span></span>
+      <button type="button" class="act${inTrip(s.id) ? "" : " primary"}" style="flex:none" data-toggle="${s.id}">${inTrip(s.id) ? "✓ Added" : "+ Add"}</button></div>`; }).join("")}</div>`).join("");
+  tripBox._groups = groups;
+}
+document.getElementById("tripbtn").addEventListener("click", () => { layersBox.hidden = true; layersBtn.setAttribute("aria-expanded", false); renderTrip(); tripBox.hidden = false; tripBox.scrollTop = 0; });
+document.getElementById("closetrip").addEventListener("click", () => { tripBox.hidden = true; });
+document.getElementById("gmapsbtn").addEventListener("click", () => openGmaps(trip.map(stopFor)));
+document.getElementById("orderbtn").addEventListener("click", orderTrip);
+tripBox.addEventListener("click", e => {
+  const t = e.target.closest("[data-show],[data-up],[data-rm],[data-toggle],[data-addall]"); if (!t) return;
+  const d = t.dataset;
+  if (d.show) { tripBox.hidden = true; showOnMap(d.show); }
+  else if (d.up) { const i = trip.indexOf(d.up); trip.splice(i - 1, 0, trip.splice(i, 1)[0]); saveTrip(); }
+  else if (d.rm) { trip = trip.filter(x => x !== d.rm); saveTrip(); }
+  else if (d.toggle) { if (inTrip(d.toggle)) trip = trip.filter(x => x !== d.toggle); else trip.push(d.toggle); saveTrip(); }
+  else if (d.addall) { tripBox._groups[+d.addall][1].forEach(s => { if (!inTrip(s.id)) trip.push(s.id); }); saveTrip(); }
+});
+
+/* ---------- state ---------- */
+function select(id) { state.sel = id; paint(); renderReadout(); }
 function renderAll() {
   document.getElementById("cmpbtn").textContent = RACES[state.race].short;
-  paint(); renderReadout(); renderLegend(); renderFindings(); renderGuide(); renderTable(); renderHits();
+  paint(); renderReadout(); renderLegend(); renderLayersBtn();
+  if (!details.hidden) renderDetails();
+  if (!tripBox.hidden) renderTrip();
 }
 document.getElementById("views").addEventListener("click", e => {
   const b = e.target.closest("button[data-view]"); if (!b) return;
-  state.view = b.dataset.view;
+  state.view = b.dataset.view; store.set("yt-view", state.view);
   document.querySelectorAll("#views button").forEach(x => x.setAttribute("aria-pressed", x === b ? "true" : "false"));
-  paint(); renderLegend();
+  paint(); renderLegend(); renderLayersBtn();
 });
-document.getElementById("race").addEventListener("change", e => { state.race = e.target.value; renderAll(); });
-document.getElementById("find").addEventListener("input", e => {
-  state.q = e.target.value;
-  const hits = IDS.filter(matches);
-  if (state.q.trim() && hits.length === 1) state.sel = hits[0];
-  paint(); renderGuide(); renderTable(); renderHits(); renderReadout();
-});
-document.getElementById("showmarks").addEventListener("change", e => { gMarks.toggleAttribute("hidden", !e.target.checked); });
+document.getElementById("race").addEventListener("change", e => { state.race = e.target.value; store.set("yt-race", state.race); renderAll(); });
 
-readColors(); renderAll(); scaleLabels();
-const retheme = () => { readColors(); renderAll(); };
+// remembered settings
+const sv = store.get("yt-view"), sr = store.get("yt-race");
+if (sr && RACES[sr]) { state.race = sr; document.getElementById("race").value = sr; }
+if (sv && (VIEWS[sv] || sv === "cmp")) { state.view = sv; document.querySelectorAll("#views button").forEach(x => x.setAttribute("aria-pressed", x.dataset.view === sv ? "true" : "false")); }
+
+state.mini = store.get("yt-mini") === "1"; miniBtn.textContent = state.mini ? "▴" : "▾";
+readColors(); setTiles(); paintWater(); renderStops(); renderTripBtn(); renderAll(); renderLocBtn();
+fitTown(); setTimeout(fitTown, 300);
+locMsg("Tap Start driving to follow your location.");
+// pick tracking back up if location was already allowed and on last time
+if (store.get("yt-drive") !== "0" && navigator.permissions && navigator.permissions.query) {
+  navigator.permissions.query({ name: "geolocation" }).then(p => { if (p.state === "granted") startLocating(); }).catch(() => {});
+}
+const retheme = () => { readColors(); setTiles(); paintWater(); renderAll(); if (me) meAcc.setStyle({ color: C.me, fillColor: C.me }); };
 matchMedia("(prefers-color-scheme: dark)").addEventListener("change", retheme);
-new MutationObserver(retheme).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
 </script>
-
 </body>
 </html>
-
